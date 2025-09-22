@@ -1,0 +1,1 @@
+import { FC } from 'react'; type Props={label:string;value:string;sub:string}; const KpiCard:FC<Props>=({label,value,sub})=>(<div className='kpi'><div className='text-sm text-white/70'>{label}</div><div className='text-2xl font-bold'>{value}</div><div className='text-xs text-white/60'>{sub}</div></div>); export default KpiCard;

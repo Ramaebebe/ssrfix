@@ -1,0 +1,30 @@
+[
+  {
+    "mmCode": "47012345",
+    "make": "Toyota",
+    "model": "Starlet",
+    "derivative": "1.4 Xi",
+    "capex": 279900
+  },
+  {
+    "mmCode": "47045678",
+    "make": "Toyota",
+    "model": "Corolla Cross",
+    "derivative": "1.8 Xi",
+    "capex": 399900
+  },
+  {
+    "mmCode": "46011122",
+    "make": "VW",
+    "model": "Polo Vivo",
+    "derivative": "1.4 Trendline",
+    "capex": 254900
+  },
+  {
+    "mmCode": "48022233",
+    "make": "Ford",
+    "model": "Ranger",
+    "derivative": "2.0 XL 4x2",
+    "capex": 539900
+  }
+]

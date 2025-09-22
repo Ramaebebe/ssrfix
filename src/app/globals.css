@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{--bg:#0f1115;--panel:#151922;--text:#e6e6ea;}
+html,body,#__next{height:100%;}
+body{background:linear-gradient(180deg,#0f1115 0%,#141821 100%);color:var(--text);}
+.container-tight{@apply mx-auto max-w-6xl p-4;}
+.card{@apply bg-[var(--panel)] rounded-2xl shadow-soft border border-white/5;}
+.btn{@apply inline-flex items-center gap-2 rounded-2xl px-4 py-2 font-medium transition;background:linear-gradient(180deg,#ec6425,#c7511e);}
+.btn:hover{filter:brightness(1.05);}
+.input{@apply w-full rounded-xl bg-black/30 border border-white/10 p-3 outline-none;}
+.navlink{@apply block rounded-xl px-3 py-2 text-sm text-white/80 hover:bg-white/10 hover:text-white;}
+.navlink-active{@apply bg-white/10 text-white;}
+.kpi{@apply card p-5;}

@@ -1,0 +1,1 @@
+const Topbar=()=> (<div className="flex items-center gap-3"><img src="/logo.svg" alt="Logo" width="40" height="40" /><div className="text-white/80">Welcome, User</div></div>); export default Topbar;
