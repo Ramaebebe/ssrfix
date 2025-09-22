@@ -2,17 +2,28 @@
 export const dynamic = 'force-dynamic';
 import { useState } from "react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
+
+const getBaseUrl = () =>
+  // set on Vercel (Project Settings → Env Vars)
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+  // fallback for local dev
+  (typeof window !== "undefined" ? window.location.origin : "");
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    const redirectTo = `${getBaseUrl()}/client/dashboard`;
+
     const { error } = await (getSupabaseClient()?.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/client/dashboard` }
+      options: { emailRedirectTo: redirectTo }
     }) ?? Promise.resolve({ error: { message: "Supabase not configured" } as any }));
+
     if (error) setError(error.message);
     else setSent(true);
   };
