@@ -5,10 +5,7 @@ import { LogOut } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 const Sidebar = () => {
   const pathname = usePathname();
-  const signOut = async () => {
-    await getSupabaseClient()?.auth.signOut();
-    window.location.href = "/";
-  };
+  const signOut = async () => { await getSupabaseClient()?.auth.signOut(); window.location.href = "/"; };
   return (
     <nav className="card p-4 sticky top-4">
       <Link href="/client/dashboard" className={`navlink ${pathname==="/client/dashboard" ? "navlink-active" : ""}`}>Dashboard</Link>

@@ -13,19 +13,18 @@ export default function DashboardPage() {
     { label: "Rebills Outstanding", value: "R 428,000", sub: "Awaiting client" }
   ];
   const rows = [
-    { reg:"FZC504L", entity:"COJ", status:"In Service", avail: "88.0%", downtime:"44h", util:"1,122" },
-    { reg:"JDK901GP", entity:"SANParks", status:"Workshop", avail: "72.5%", downtime:"128h", util:"698" },
+    { reg:"FZC504L", entity:"COJ", status:"In Service", avail:"88.0%", downtime:"44h", util:"1,122" },
+    { reg:"JDK901GP", entity:"SANParks", status:"Workshop", avail:"72.5%", downtime:"128h", util:"698" },
     { reg:"HLR222EC", entity:"Mangaung", status:"In Service", avail:"97.3%", downtime:"11h", util:"1,876" }
   ];
   return (
     <main className="container-tight">
-      <img src="/picture1.jpg" alt="Afrirent banner" className="w-full rounded-2xl mb-4 border border-white/5" />
       <div className="grid md:grid-cols-4 gap-4">{kpis.map((k,i)=>(<KpiCard key={i} label={k.label} value={k.value} sub={k.sub} />))}</div>
       <div className="grid md:grid-cols-2 gap-4 mt-4">
-        <div className="card p-4"><h3 className="font-semibold mb-2">Availability (30 days)</h3><AvailabilityChart /></div>
-        <div className="card p-4"><h3 className="font-semibold mb-2">Downtime by Category</h3><DowntimeByCategory /></div>
+        <div className="card p-4 watermark"><h3 className="font-semibold mb-2">Availability (30 days)</h3><AvailabilityChart /></div>
+        <div className="card p-4 watermark"><h3 className="font-semibold mb-2">Downtime by Category</h3><DowntimeByCategory /></div>
       </div>
-      <div className="card p-4 mt-4"><h3 className="font-semibold mb-2">Fleet Snapshot</h3><DataTable rows={rows} /></div>
+      <div className="card p-4 mt-4 watermark"><h3 className="font-semibold mb-2">Fleet Snapshot</h3><DataTable rows={rows} /></div>
     </main>
   );
 }

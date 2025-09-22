@@ -3,8 +3,9 @@ export default function LandingPage() {
   return (
     <main className="container-tight">
       <section className="relative card overflow-hidden">
-        <img src="/afrirent_holdings.png" alt="Afrirent Holdings" className="w-full h-[360px] object-cover opacity-90" />
-        <div className="absolute inset-0 p-6 z-10 bg-gradient-to-t from-black/40 to-transparent">
+        <img src="/brand/afrirent_holdings.png" alt="Afrirent Holdings" className="w-full h-[340px] object-cover opacity-60" />
+        <div className="absolute inset-0 p-6 z-10">
+          <img src="/brand/afrirent_logo.png" alt="Afrirent" className="w-28 mb-3" />
           <h1 className="text-3xl font-bold mb-2">The Future of Fleet Management is Here</h1>
           <p className="text-white/80 max-w-2xl mb-4">Live availability, downtime, utilisation, and on-the-fly leasing quotes. Securely delivered to each client and cost centre.</p>
           <div className="flex gap-3">
@@ -18,7 +19,12 @@ export default function LandingPage() {
           { t:"Executive KPIs", d:"Availability, Utilisation, Downtime, Rebills."},
           { t:"Client Segmentation", d:"Row-level access by entity, cost centre."},
           { t:"Quoting", d:"Real-time lease quotes from vehicle catalogue."}
-        ].map((x,i)=>(<div key={i} className="card p-5"><h3 className="font-semibold">{x.t}</h3><p className="text-white/70">{x.d}</p></div>))}
+        ].map((x,i)=>(
+          <div key={i} className="card p-5">
+            <h3 className="font-semibold">{x.t}</h3>
+            <p className="text-white/70">{x.d}</p>
+          </div>
+        ))}
       </section>
     </main>
   );
