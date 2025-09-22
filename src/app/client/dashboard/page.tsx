@@ -19,6 +19,7 @@ export default function DashboardPage() {
   ];
   return (
     <main className="container-tight">
+      <img src="/picture1.jpg" alt="Afrirent banner" className="w-full rounded-2xl mb-4 border border-white/5" />
       <div className="grid md:grid-cols-4 gap-4">{kpis.map((k,i)=>(<KpiCard key={i} label={k.label} value={k.value} sub={k.sub} />))}</div>
       <div className="grid md:grid-cols-2 gap-4 mt-4">
         <div className="card p-4"><h3 className="font-semibold mb-2">Availability (30 days)</h3><AvailabilityChart /></div>
