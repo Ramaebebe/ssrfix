@@ -1,10 +1,10 @@
 "use client";
 export const dynamic = 'force-dynamic';
-import dynamic from "next/dynamic";
-const KpiCard = dynamic(() => import("@/components/KpiCard"), { ssr: false });
-const AvailabilityChart = dynamic(() => import("@/components/charts/AvailabilityChart"), { ssr: false });
-const DowntimeByCategory = dynamic(() => import("@/components/charts/DowntimeByCategory"), { ssr: false });
-const DataTable = dynamic(() => import("@/components/DataTable"), { ssr: false });
+import NextDynamic from "next/dynamic";
+const KpiCard = NextDynamic(() => import("@/components/KpiCard"), { ssr: false });
+const AvailabilityChart = NextDynamic(() => import("@/components/charts/AvailabilityChart"), { ssr: false });
+const DowntimeByCategory = NextDynamic(() => import("@/components/charts/DowntimeByCategory"), { ssr: false });
+const DataTable = NextDynamic(() => import("@/components/DataTable"), { ssr: false });
 export default function DashboardPage() {
   const kpis = [
     { label: "Fleet Availability", value: "94.2%", sub: "Target ≥ 95%" },
