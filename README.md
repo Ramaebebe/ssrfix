@@ -1,14 +1,17 @@
-Afrirent Portal — All Modules Enabled (Next.js 14 + Tailwind + Supabase optional)
+Afrirent Portal — Enhanced Full-Screen Hero & Polished Modules
 
-Routes: /client/(dashboard|quoting|reports|maintenance|fuel|rebills|assets|invoices|entities|users|settings|powerbi)
-- Quoting has **Download PDF**.
-- Build-safe without Supabase env vars.
+Highlights
+- Full-bleed hero with glass cards floating below.
+- Consistent soft-glass cards across all modules.
+- Quoting exports branded PDFs.
+- 404 page and /client redirect to /client/dashboard.
+- Build-safe with optional Supabase env.
 
-Setup
+Getting Started
 npm install
 npm run dev
 
-Env (optional until ready)
+Optional env (for auth later):
+NEXT_PUBLIC_SITE_URL
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
-NEXT_PUBLIC_SITE_URL

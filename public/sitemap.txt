@@ -1,0 +1,4 @@
+/
+/client/dashboard
+/client/quoting
+/login
