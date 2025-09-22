@@ -4,7 +4,7 @@
 :root{--bg:#0f1115;--panel:#151922;--text:#e6e6ea;}
 html,body,#__next{height:100%;}
 body{background:linear-gradient(180deg,#0f1115 0%,#141821 100%);color:var(--text);}
-.container-tight{@apply mx-auto max-w-6xl p-4;}
+.container-tight{@apply mx-auto max-w-7xl p-6;}
 .card{@apply bg-[var(--panel)] rounded-2xl shadow-soft border border-white/5;}
 .btn{@apply inline-flex items-center gap-2 rounded-2xl px-4 py-2 font-medium transition;background:linear-gradient(180deg,#ec6425,#c7511e);}
 .btn:hover{filter:brightness(1.05);}
@@ -12,14 +12,14 @@ body{background:linear-gradient(180deg,#0f1115 0%,#141821 100%);color:var(--text
 .navlink{@apply block rounded-xl px-3 py-2 text-sm text-white/80 hover:bg-white/10 hover:text-white;}
 .navlink-active{@apply bg-white/10 text-white;}
 .kpi{@apply card p-5;}
+.hero-overlay{background: radial-gradient(60% 80% at 20% 20%, rgba(0,0,0,.45) 0%, rgba(0,0,0,.2) 50%, rgba(0,0,0,0) 100%);}
 
-/* Watermark helpers */
-.watermark { position: relative; }
-.watermark::after {
-  content: "";
-  position: absolute; inset: 0;
-  background-image: url("/brand/paw.png");
-  background-repeat: repeat;
-  background-size: 120px 120px;
-  opacity: 0.06; pointer-events: none; border-radius: 1rem;
-}
+/* watermark */
+.watermark{position:relative;}
+.watermark::after{content:"";position:absolute;inset:0;background-image:url("/brand/paw.png");background-repeat:repeat;background-size:120px 120px;opacity:.06;pointer-events:none;border-radius:1rem;}
+.footer-strip{background:#EC6425;color:#fff;}
+.print-a4{width:794px; min-height:1123px; background:white; color:#111; padding:32px;}
+.print-h1{font-size:20px; font-weight:700;}
+.print-meta{color:#444; font-size:12px;}
+.print-table{width:100%; border-collapse:collapse; margin-top:16px;}
+.print-table th, .print-table td{border:1px solid #ddd; padding:8px; font-size:12px;}
