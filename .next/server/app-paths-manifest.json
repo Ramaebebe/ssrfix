@@ -1,0 +1,20 @@
+{
+  "/api/health/route": "app/api/health/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/quotes/price/route": "app/api/quotes/price/route.js",
+  "/page": "app/page.js",
+  "/login/page": "app/login/page.js",
+  "/client/page": "app/client/page.js",
+  "/client/fuel/page": "app/client/fuel/page.js",
+  "/client/assets/page": "app/client/assets/page.js",
+  "/client/dashboard/page": "app/client/dashboard/page.js",
+  "/client/invoices/page": "app/client/invoices/page.js",
+  "/client/maintenance/page": "app/client/maintenance/page.js",
+  "/client/entities/page": "app/client/entities/page.js",
+  "/client/powerbi/page": "app/client/powerbi/page.js",
+  "/client/settings/page": "app/client/settings/page.js",
+  "/client/users/page": "app/client/users/page.js",
+  "/client/rebills/page": "app/client/rebills/page.js",
+  "/client/quoting/page": "app/client/quoting/page.js",
+  "/client/reports/page": "app/client/reports/page.js"
+}
