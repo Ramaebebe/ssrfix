@@ -19,7 +19,7 @@
       "static/chunks/fd9d1056-71ead9a38d7182fa.js",
       "static/chunks/117-50f22dd95c6dc1dc.js",
       "static/chunks/main-app-8f878cafb5a5e463.js",
-      "static/css/1e442d85139d7780.css",
+      "static/css/1d1faef89d6c4bcb.css",
       "static/chunks/app/layout-5341a0b88d7cb9bb.js"
     ],
     "/page": [
@@ -36,7 +36,7 @@
       "static/chunks/117-50f22dd95c6dc1dc.js",
       "static/chunks/main-app-8f878cafb5a5e463.js",
       "static/chunks/439-df565b13ff2b8152.js",
-      "static/chunks/app/login/page-37cfb7208fd80868.js"
+      "static/chunks/app/login/page-729756d442905f02.js"
     ],
     "/client/page": [
       "static/chunks/webpack-2a837492a3d9d459.js",
@@ -52,14 +52,15 @@
       "static/chunks/main-app-8f878cafb5a5e463.js",
       "static/chunks/439-df565b13ff2b8152.js",
       "static/chunks/972-a3f0038e55345c81.js",
-      "static/chunks/app/client/layout-d1afc8e4a17fa2fb.js"
+      "static/chunks/632-d70a146dbefb596b.js",
+      "static/chunks/app/client/layout-a668658180e100b8.js"
     ],
-    "/client/fuel/page": [
+    "/client/entities/page": [
       "static/chunks/webpack-2a837492a3d9d459.js",
       "static/chunks/fd9d1056-71ead9a38d7182fa.js",
       "static/chunks/117-50f22dd95c6dc1dc.js",
       "static/chunks/main-app-8f878cafb5a5e463.js",
-      "static/chunks/app/client/fuel/page-fe9b021a14e9f1b2.js"
+      "static/chunks/app/client/entities/page-cb6794c94c82f909.js"
     ],
     "/client/assets/page": [
       "static/chunks/webpack-2a837492a3d9d459.js",
@@ -68,19 +69,26 @@
       "static/chunks/main-app-8f878cafb5a5e463.js",
       "static/chunks/app/client/assets/page-6677090c5d44452a.js"
     ],
-    "/client/dashboard/page": [
-      "static/chunks/webpack-2a837492a3d9d459.js",
-      "static/chunks/fd9d1056-71ead9a38d7182fa.js",
-      "static/chunks/117-50f22dd95c6dc1dc.js",
-      "static/chunks/main-app-8f878cafb5a5e463.js",
-      "static/chunks/app/client/dashboard/page-51598208b6ef18fc.js"
-    ],
     "/client/invoices/page": [
       "static/chunks/webpack-2a837492a3d9d459.js",
       "static/chunks/fd9d1056-71ead9a38d7182fa.js",
       "static/chunks/117-50f22dd95c6dc1dc.js",
       "static/chunks/main-app-8f878cafb5a5e463.js",
       "static/chunks/app/client/invoices/page-00967694f41d001b.js"
+    ],
+    "/client/fuel/page": [
+      "static/chunks/webpack-2a837492a3d9d459.js",
+      "static/chunks/fd9d1056-71ead9a38d7182fa.js",
+      "static/chunks/117-50f22dd95c6dc1dc.js",
+      "static/chunks/main-app-8f878cafb5a5e463.js",
+      "static/chunks/app/client/fuel/page-fe9b021a14e9f1b2.js"
+    ],
+    "/client/dashboard/page": [
+      "static/chunks/webpack-2a837492a3d9d459.js",
+      "static/chunks/fd9d1056-71ead9a38d7182fa.js",
+      "static/chunks/117-50f22dd95c6dc1dc.js",
+      "static/chunks/main-app-8f878cafb5a5e463.js",
+      "static/chunks/app/client/dashboard/page-51598208b6ef18fc.js"
     ],
     "/client/maintenance/page": [
       "static/chunks/webpack-2a837492a3d9d459.js",
@@ -89,12 +97,12 @@
       "static/chunks/main-app-8f878cafb5a5e463.js",
       "static/chunks/app/client/maintenance/page-2b6c9a5970f0e7da.js"
     ],
-    "/client/entities/page": [
+    "/client/rebills/page": [
       "static/chunks/webpack-2a837492a3d9d459.js",
       "static/chunks/fd9d1056-71ead9a38d7182fa.js",
       "static/chunks/117-50f22dd95c6dc1dc.js",
       "static/chunks/main-app-8f878cafb5a5e463.js",
-      "static/chunks/app/client/entities/page-cb6794c94c82f909.js"
+      "static/chunks/app/client/rebills/page-a9964d5c0546dd29.js"
     ],
     "/client/powerbi/page": [
       "static/chunks/webpack-2a837492a3d9d459.js",
@@ -116,13 +124,6 @@
       "static/chunks/117-50f22dd95c6dc1dc.js",
       "static/chunks/main-app-8f878cafb5a5e463.js",
       "static/chunks/app/client/users/page-a2521e6374684850.js"
-    ],
-    "/client/rebills/page": [
-      "static/chunks/webpack-2a837492a3d9d459.js",
-      "static/chunks/fd9d1056-71ead9a38d7182fa.js",
-      "static/chunks/117-50f22dd95c6dc1dc.js",
-      "static/chunks/main-app-8f878cafb5a5e463.js",
-      "static/chunks/app/client/rebills/page-a9964d5c0546dd29.js"
     ],
     "/client/quoting/page": [
       "static/chunks/webpack-2a837492a3d9d459.js",
@@ -149,7 +150,7 @@
       "static/chunks/666-645bbf11cea8ddbc.js",
       "static/chunks/553-387cf84f64aa534a.js",
       "static/chunks/156-85161d8cb5addf2b.js",
-      "static/chunks/app/client/reports/page-a091aabefe86fb15.js"
+      "static/chunks/app/client/reports/page-73d53acf0ce7b324.js"
     ]
   }
 }
