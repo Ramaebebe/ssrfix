@@ -1,11 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import supabase from "@/lib/supabaseClient";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 const Topbar = () => {
+  const sb = getSupabaseClient();
+
   const signOut = async () => {
-    await supabase.auth.signOut();
+    if (!sb) {
+      console.warn("Supabase not configured; redirecting to home after pseudo-signout.");
+      window.location.href = "/";
+      return;
+    }
+    await sb.auth.signOut();
     window.location.href = "/";
   };
 
@@ -16,9 +23,7 @@ const Topbar = () => {
         <span className="font-semibold">Afrirent Portal</span>
       </div>
       <div className="text-sm text-white/70">Welcome, User</div>
-      <button className="navlink" onClick={signOut}>
-        Sign out
-      </button>
+      <button className="navlink" onClick={signOut}>Sign out</button>
     </header>
   );
 };
