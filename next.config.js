@@ -1,11 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverActions: { bodySizeLimit: "2mb" }
+    serverActions: { bodySizeLimit: "2mb" },
   },
   eslint: {
-    // Safety net: don't fail production builds on lint. Keep local linting with `npm run lint`.
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // prevents lint from failing the prod build
   },
 };
 module.exports = nextConfig;
