@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { supabase } from "@/lib/supabaseClient";
+import supabase from "@/lib/supabaseClient";
 
 const Topbar = () => {
   const signOut = async () => {
