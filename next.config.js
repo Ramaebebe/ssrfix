@@ -4,7 +4,7 @@ const nextConfig = {
     serverActions: { bodySizeLimit: "2mb" },
   },
   eslint: {
-    ignoreDuringBuilds: true, // prevents lint from failing the prod build
+    ignoreDuringBuilds: true,
   },
 };
 module.exports = nextConfig;
