@@ -78,7 +78,12 @@ export default function ReportsPage() {
       value:   Number(r.value||r.Value||0),
       unit:    String(r.unit||r.Unit||""),
       delta:   r.delta!=="" ? Number(r.delta) : undefined,
-      spark:   typeof r.spark==="string" ? r.spark.split(",").map((n:string)=>Number(n.trim())).filter((n)=>!Number.isNaN(n)) : undefined,
+      spark: typeof r.spark === "string"
+        ? r.spark
+            .split(",")
+            .map((n: string) => Number(n.trim()))
+            .filter((x: number) => !Number.isNaN(x))
+        : undefined,
     }));
 
     const wsTx = wb.Sheets["Transactions"];
