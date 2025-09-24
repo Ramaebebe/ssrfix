@@ -9,7 +9,7 @@ export default function LandingPage() {
         <div className="hero-overlay" />
         <div className="hero-content">
           <div className="container-tight">
-            <img src="/brand/afrirent_logo.png" alt="Afrirent" className="w-28 mb-6 drop-shadow-xl" />
+            <img src="/brand/afrirent_logo.png" alt="Afrirent" className="w-40 mb-6 drop-shadow-xl" />
             <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-3">The Integrated Fleet Management Portal</h1>
             <p className="text-white/80 max-w-3xl text-lg md:text-xl mb-6">
               Live availability, downtime, utilisation, and on-the-fly leasing quotes. Securely delivered to each client and cost centre.
