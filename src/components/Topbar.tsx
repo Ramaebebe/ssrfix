@@ -8,7 +8,7 @@ const Topbar = () => {
 
   const signOut = async () => {
     if (!sb) {
-      console.warn("Supabase not configured; redirecting to home after pseudo-signout.");
+      console.warn("Supabase not configured; redirecting to home.");
       window.location.href = "/";
       return;
     }
@@ -23,7 +23,9 @@ const Topbar = () => {
         <span className="font-semibold">Afrirent Portal</span>
       </div>
       <div className="text-sm text-white/70">Welcome, User</div>
-      <button className="navlink" onClick={signOut}>Sign out</button>
+      <button className="navlink" onClick={signOut}>
+        Sign out
+      </button>
     </header>
   );
 };
