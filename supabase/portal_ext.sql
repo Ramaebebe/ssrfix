@@ -1,106 +1,72 @@
--- === PORTAL EXTENSIONS: QUOTES + AUDITS ==============================
+-- portal_ext.sql
+-- Minimal multi-tenant schema for Afrirent portal (idempotent where possible)
 
--- Vehicles catalog (optional; used by Quoting page)
-create table if not exists public.vehicles (
+create schema if not exists portal;
+
+-- Organisations (tenants)
+create table if not exists portal.orgs (
   id uuid primary key default gen_random_uuid(),
-  mm_code text,
-  make text not null,
-  model text not null,
-  derivative text,
-  capex numeric not null,
-  is_ev boolean default false,
-  created_at timestamptz default now()
+  name text not null unique,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
--- Signed quote uploads (tracks uploaded signed PDFs)
-create table if not exists public.signed_quote_uploads (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid,
-  path text not null,
-  filename text not null,
-  created_at timestamptz default now()
+-- Profiles link to auth.users
+create table if not exists portal.profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  org_id uuid not null references portal.orgs(id) on delete restrict,
+  full_name text,
+  role text check (role in ('admin','manager','agent','viewer')) default 'viewer',
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
--- Vehicle audit inspections
-create table if not exists public.audit_inspections (
+-- Example domain table (rebills tracker header only as example - details live elsewhere)
+create table if not exists portal.rebills (
   id uuid primary key default gen_random_uuid(),
-  reg text not null,
-  odometer numeric,
-  condition text not null,
-  issues text,
-  lat double precision,
-  lng double precision,
-  created_at timestamptz default now(),
-  user_email text generated always as ((auth.jwt()->>'email')) stored
+  org_id uuid not null references portal.orgs(id) on delete restrict,
+  client_name text not null,
+  status text not null check (status in ('awaiting authorization','approved','rejected','written_off')),
+  amount numeric(14,2) not null default 0,
+  created_by uuid not null references auth.users(id) on delete restrict,
+  created_at timestamptz not null default now()
 );
 
--- Photos for each inspection
-create table if not exists public.audit_photos (
-  id uuid primary key default gen_random_uuid(),
-  inspection_id uuid not null references public.audit_inspections(id) on delete cascade,
-  path text not null,
-  filename text not null,
-  created_at timestamptz default now()
-);
-
--- RLS
-alter table public.vehicles enable row level security;
-alter table public.signed_quote_uploads enable row level security;
-alter table public.audit_inspections enable row level security;
-alter table public.audit_photos enable row level security;
-
--- Vehicles readable by all authenticated users (or open if you prefer)
-do $$ begin
-  if not exists (select 1 from pg_policies where polname = 'vehicles_select_all') then
-    create policy "vehicles_select_all" on public.vehicles
-      for select using (true);
-  end if;
+-- Updated at triggers
+create or replace function portal.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
 end $$;
 
--- Signed quotes: users can insert their own; admin can read (simplified: allow read all)
 do $$ begin
-  if not exists (select 1 from pg_policies where polname = 'signed_quotes_select_all') then
-    create policy "signed_quotes_select_all" on public.signed_quote_uploads for select using (true);
-  end if;
-  if not exists (select 1 from pg_policies where polname = 'signed_quotes_insert_any') then
-    create policy "signed_quotes_insert_any" on public.signed_quote_uploads for insert with check (true);
-  end if;
-end $$;
-
--- Audits: allow insert; allow select all (tighten later to user_email if needed)
-do $$ begin
-  if not exists (select 1 from pg_policies where polname = 'audit_inspections_select') then
-    create policy "audit_inspections_select" on public.audit_inspections for select using (true);
-  end if;
-  if not exists (select 1 from pg_policies where polname = 'audit_inspections_insert') then
-    create policy "audit_inspections_insert" on public.audit_inspections for insert with check (true);
+  if not exists (select 1 from pg_trigger where tgname = 'profiles_set_updated_at') then
+    create trigger profiles_set_updated_at
+      before update on portal.profiles
+      for each row execute function portal.set_updated_at();
   end if;
 end $$;
 
 do $$ begin
-  if not exists (select 1 from pg_policies where polname = 'audit_photos_select') then
-    create policy "audit_photos_select" on public.audit_photos for select using (true);
-  end if;
-  if not exists (select 1 from pg_policies where polname = 'audit_photos_insert') then
-    create policy "audit_photos_insert" on public.audit_photos for insert with check (true);
+  if not exists (select 1 from pg_trigger where tgname = 'orgs_set_updated_at') then
+    create trigger orgs_set_updated_at
+      before update on portal.orgs
+      for each row execute function portal.set_updated_at();
   end if;
 end $$;
 
--- Helper: inspections with photo counts
-create or replace function public.list_inspections_with_counts()
-returns table (
-  id uuid,
-  reg text,
-  odometer numeric,
-  condition text,
-  issues text,
-  lat double precision,
-  lng double precision,
-  created_at timestamptz,
-  photo_count bigint
-) language sql stable as $$
-  select i.id, i.reg, i.odometer, i.condition, i.issues, i.lat, i.lng, i.created_at,
-         (select count(*) from public.audit_photos p where p.inspection_id = i.id) as photo_count
-  from public.audit_inspections i
-  order by i.created_at desc
+-- Helper: check if current_user belongs to same org as target row
+create or replace function portal.assert_same_org(target_org uuid)
+returns boolean language sql stable as $$
+  select exists (
+    select 1
+    from portal.profiles p
+    where p.user_id = auth.uid()
+      and p.org_id = target_org
+      and p.is_active = true
+  );
 $$;
+
+comment on function portal.assert_same_org is 'RLS helper: returns true if auth.uid() has an active profile in target org';
