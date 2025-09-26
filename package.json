@@ -21,6 +21,7 @@
     "jspdf": "^2.5.2",
     "lucide-react": "^0.453.0",
     "next": "14.2.15",
+    "pdf-lib": "^1.17.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "recharts": "^2.13.0",
@@ -30,12 +31,12 @@
     "@types/node": "^20.14.12",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
-    "autoprefixer": "^10.4.19",
+    "autoprefixer": "^10.4.21",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.15",
-    "postcss": "^8.4.41",
+    "postcss": "^8.5.6",
     "prettier": "^3.3.3",
-    "tailwindcss": "^3.4.10",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.6.2"
   },
   "engines": {
