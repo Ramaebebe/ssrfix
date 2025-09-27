@@ -1,24 +1,31 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 
 export default function ClientGuard({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    let mounted = true;
+
     const check = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) router.replace("/login");
-    };
-    check();
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!mounted) return;
       if (!session) router.replace("/login");
-    });
-    return () => { sub.subscription?.unsubscribe(); };
+      else setReady(true);
+    };
+
+    check();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => check());
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, [router]);
 
+  if (!ready) return null;
   return <>{children}</>;
 }
-

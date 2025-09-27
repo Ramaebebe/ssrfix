@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 
 const Topbar = () => {
   const signOut = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/";
+    window.location.href = "/login";
   };
 
   return (
@@ -15,10 +15,10 @@ const Topbar = () => {
         <Image src="/logo.svg" alt="Logo" width={32} height={32} />
         <span className="font-semibold">Afrirent Portal</span>
       </div>
-      <div className="text-sm text-white/70">Welcome, User</div>
-      <button className="navlink" onClick={signOut}>
-        Sign out
-      </button>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-white/70 hidden sm:block">Welcome</span>
+        <button className="navlink" onClick={signOut}>Sign out</button>
+      </div>
     </header>
   );
 };
