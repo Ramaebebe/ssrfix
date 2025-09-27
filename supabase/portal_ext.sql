@@ -1,17 +1,10 @@
--- portal_ext.sql
--- Minimal multi-tenant schema for Afrirent portal (idempotent where possible)
-
 create schema if not exists portal;
-
--- Organisations (tenants)
 create table if not exists portal.orgs (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
--- Profiles link to auth.users
 create table if not exists portal.profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   org_id uuid not null references portal.orgs(id) on delete restrict,
@@ -21,8 +14,6 @@ create table if not exists portal.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
--- Example domain table (rebills tracker header only as example - details live elsewhere)
 create table if not exists portal.rebills (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references portal.orgs(id) on delete restrict,
@@ -32,41 +23,27 @@ create table if not exists portal.rebills (
   created_by uuid not null references auth.users(id) on delete restrict,
   created_at timestamptz not null default now()
 );
-
--- Updated at triggers
 create or replace function portal.set_updated_at()
 returns trigger language plpgsql as $$
-begin
-  new.updated_at = now();
-  return new;
-end $$;
-
+begin new.updated_at = now(); return new; end $$;
 do $$ begin
   if not exists (select 1 from pg_trigger where tgname = 'profiles_set_updated_at') then
-    create trigger profiles_set_updated_at
-      before update on portal.profiles
-      for each row execute function portal.set_updated_at();
+    create trigger profiles_set_updated_at before update on portal.profiles
+    for each row execute function portal.set_updated_at();
   end if;
 end $$;
-
 do $$ begin
   if not exists (select 1 from pg_trigger where tgname = 'orgs_set_updated_at') then
-    create trigger orgs_set_updated_at
-      before update on portal.orgs
-      for each row execute function portal.set_updated_at();
+    create trigger orgs_set_updated_at before update on portal.orgs
+    for each row execute function portal.set_updated_at();
   end if;
 end $$;
-
--- Helper: check if current_user belongs to same org as target row
 create or replace function portal.assert_same_org(target_org uuid)
 returns boolean language sql stable as $$
   select exists (
-    select 1
-    from portal.profiles p
+    select 1 from portal.profiles p
     where p.user_id = auth.uid()
       and p.org_id = target_org
       and p.is_active = true
   );
 $$;
-
-comment on function portal.assert_same_org is 'RLS helper: returns true if auth.uid() has an active profile in target org';

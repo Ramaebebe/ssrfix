@@ -1,11 +1,7 @@
--- rls_tighten.sql
--- Enable RLS and add tenant-aware policies
-
 alter table portal.orgs enable row level security;
 alter table portal.profiles enable row level security;
 alter table portal.rebills enable row level security;
 
--- Orgs: only users with a profile in the org can read it; only admins can insert/update
 drop policy if exists orgs_select on portal.orgs;
 create policy orgs_select on portal.orgs
   for select using (
@@ -19,25 +15,23 @@ create policy orgs_select on portal.orgs
 
 drop policy if exists orgs_insert on portal.orgs;
 create policy orgs_insert on portal.orgs
-  for insert with check (false); -- prevent inserts from anon users; only service role should create orgs
+  for insert with check (false);
 
 drop policy if exists orgs_update on portal.orgs;
 create policy orgs_update on portal.orgs
-  for update using (false) with check (false); -- locked down; admin service role only
+  for update using (false) with check (false);
 
--- Profiles: a user can read their own org's profiles; update only their own row unless admin
 drop policy if exists profiles_select on portal.profiles;
 create policy profiles_select on portal.profiles
   for select using (portal.assert_same_org(org_id));
 
 drop policy if exists profiles_insert on portal.profiles;
 create policy profiles_insert on portal.profiles
-  for insert with check (false); -- service role only
+  for insert with check (false);
 
 drop policy if exists profiles_update on portal.profiles;
 create policy profiles_update on portal.profiles
   for update using (
-    -- allow if same org and either self or has admin role
     portal.assert_same_org(org_id) and (
       user_id = auth.uid() or
       exists (
@@ -50,7 +44,6 @@ create policy profiles_update on portal.profiles
     )
   );
 
--- Rebills: tenant isolation for select/insert/update
 drop policy if exists rebills_select on portal.rebills;
 create policy rebills_select on portal.rebills
   for select using (portal.assert_same_org(org_id));

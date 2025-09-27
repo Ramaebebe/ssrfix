@@ -1,28 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Base reset additions safe for App Router */
-html, body {
-  height: 100%;
-}
+html, body { height: 100%; }
 body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-  background: #0b0b0c;
-  color: #eaeaea;
+  background: #0b0b0c; color: #eaeaea;
 }
-
-/* Afrirent brand accent */
-:root {
-  --afr-orange: #EC6425;
-}
-
-a {
-  text-decoration: none;
-}
-.card {
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 0.75rem;
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(6px);
-}
+:root { --afr-orange: #EC6425; }
+a { text-decoration: none; }
+.card { border: 1px solid rgba(255,255,255,0.08); border-radius: .75rem; background: rgba(255,255,255,0.04); backdrop-filter: blur(6px); }
