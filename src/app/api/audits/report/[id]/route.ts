@@ -39,16 +39,25 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const logoPath = path.join(process.cwd(), "public", BRAND.logoPath.replace(/^\//, ""));
     const logoBytes = await fs.readFile(logoPath).catch(() => new Uint8Array());
 
+    // START OF REFACTORED CODE BLOCK
+    // Format the location data into a single string as required by the auditTemplate.ts type.
+    const locationStr = audit.lat && audit.lng
+      ? `${audit.lat}, ${audit.lng}${audit.address ? " — " + audit.address : ""}`
+      : audit.address || "N/A";
+      
+    // The findings are already in the correct format for the template, so no change is needed there.
+
     const pdfBytes = await buildAuditPdf({
       id: audit.id,
       date: audit.date || new Date().toISOString(),
       inspector: audit.inspector || "N/A",
       vehicle: { reg: audit.reg, vin: audit.vin, make: audit.make, model: audit.model },
-      location: { lat: audit.lat || 0, lng: audit.lng || 0, address: audit.address || "" },
-      findings: (audit.findings || []).map((f: any) => ({ label: f.label, value: f.value })),
+      location: locationStr, // Changed this line to use the formatted string
+      findings: audit.findings, // This is already in the correct format as per the error log
       notes: audit.notes || "",
       photos,
     }, logoBytes as unknown as Uint8Array);
+    // END OF REFACTORED CODE BLOCK
 
     const filename = `audit-${id}.pdf`;
     const disp = req.nextUrl.searchParams.get("download") === "1"
@@ -63,7 +72,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         "Cache-Control": "private, max-age=0, must-revalidate",
       },
     });
-  } catch (e:any) {
+  } catch (e: any) {
     return NextResponse.json({ error: e.message || "Failed to render audit PDF" }, { status: 400 });
   }
 }
