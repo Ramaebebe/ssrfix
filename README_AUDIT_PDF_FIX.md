@@ -17,7 +17,7 @@ Example (edge/server route sketch):
 ```ts
 import { NextResponse } from "next/server";
 import { buildAuditPdf } from "@/lib/pdf/auditTemplate";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const id = params.id;

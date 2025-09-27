@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+// Fix import: use centralized client
 import { supabase } from "@/lib/supabase/client";
 
 export default function ClientGuard({ children }: { children: React.ReactNode }) {
@@ -14,15 +15,22 @@ export default function ClientGuard({ children }: { children: React.ReactNode })
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted) return;
-      if (!session) router.replace("/login");
-      else setReady(true);
+      if (!session) {
+        router.replace("/login");
+      } else {
+        setReady(true);
+      }
     };
 
     check();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => check());
+
+    const { data: subscription } = supabase.auth.onAuthStateChange(() => {
+      check();
+    });
+
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
+      subscription?.subscription?.unsubscribe?.();
     };
   }, [router]);
 

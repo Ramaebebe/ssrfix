@@ -290,7 +290,7 @@ export async function buildAuditPdf(input: AuditPdfInput, logoBytes?: Uint8Array
 Write-File "src/components/Topbar.tsx" @'
 "use client";
 import Image from "next/image";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 
 const Topbar = () => {
   const signOut = async () => {
@@ -313,7 +313,7 @@ export default Topbar;
 Write-File "src/components/ClientGuard.tsx" @'
 "use client";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 
 export default function ClientGuard({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -423,7 +423,7 @@ export default function Home() {
 Write-File "src/app/login/page.tsx" @'
 "use client";
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 export const dynamic = "force-dynamic";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -451,7 +451,7 @@ Write-File "src/app/auth/callback/page.tsx" @'
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 export default function Callback() {
   const router = useRouter();
   useEffect(() => {
@@ -507,7 +507,7 @@ import { ResponsiveContainer, LineChart, Line } from "recharts";
 import { AgGridReact } from "ag-grid-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 
@@ -621,7 +621,7 @@ export default function ReportsPage() {
 Write-File "src/app/client/audits/page.tsx" @'
 "use client";
 import { useEffect, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 type Inspection = {
   id: string; created_at: string; reg: string | null;
