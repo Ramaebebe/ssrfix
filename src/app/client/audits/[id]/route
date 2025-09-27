@@ -1,0 +1,54 @@
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabaseClient";
+import { buildAuditPdf } from "@/lib/pdf/auditTemplate";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(_req: Request, { params }: { params: { id: string } }) {
+  const id = params.id;
+
+  const { data: audit, error } = await supabase.from("vehicle_audits").select("*").eq("id", id).single();
+  if (error || !audit) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Photos from storage
+  const { data: list } = await supabase.storage.from("audits").list(id);
+  const photos: { filename: string; bytes: Uint8Array }[] = [];
+  for (const f of list ?? []) {
+    const { data: file } = await supabase.storage.from("audits").download(`${id}/${f.name}`);
+    if (file) {
+      const u8 = new Uint8Array(await file.arrayBuffer());
+      photos.push({ filename: f.name, bytes: u8 });
+    }
+  }
+
+  // Location string
+  const lat = audit.lat ?? null;
+  const lng = audit.lng ?? null;
+  const address = audit.address ?? "";
+  const locationStr = lat != null && lng != null
+    ? `${lat}, ${lng}${address ? " — " + address : ""}`
+    : (address || "-");
+
+  const payload = {
+    id: audit.id,
+    vehicleReg: audit.reg || audit.vehicleReg || "-",
+    entity: audit.entity || "",
+    inspector: audit.inspector || "",
+    inspectedAt: audit.inspected_at || audit.inspectedAt || null,
+    location: locationStr,
+    odometerKm: audit.odometer_km ?? audit.odometerKm ?? null,
+    findings: audit.findings_text ?? audit.findings ?? "",
+    status: audit.status ?? "",
+  };
+
+  const pdfBytes = await buildAuditPdf(payload as any, photos);
+  return new NextResponse(pdfBytes, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="audit-${id}.pdf"`,
+    },
+  });
+}
