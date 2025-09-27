@@ -1,8 +1,8 @@
+// src/app/client/audits/page.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { useEffect, useRef, useState, useMemo } from "react";
+import getSupabaseClient from "@/lib/supabaseClient";
 
 type Inspection = {
   id: string;
@@ -22,8 +22,8 @@ export default function AuditsPage() {
   const [odo, setOdo] = useState<number | "">("");
   const [condition, setCondition] = useState("Good");
   const [issues, setIssues] = useState("");
-  const [coords, setCoords] = useState<{ lat:number; lng:number }|null>(null);
-  const [files, setFiles] = useState<FileList|null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [files, setFiles] = useState<FileList | null>(null);
   const [saving, setSaving] = useState(false);
   const [rows, setRows] = useState<Inspection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,8 +41,27 @@ export default function AuditsPage() {
 
   const loadRows = async () => {
     if (!sb) { setLoading(false); return; }
-    const { data, error } = await sb.rpc("list_inspections_with_counts"); // defined in SQL below
-    if (!error && data) setRows(data as unknown as Inspection[]);
+    // If you have an RPC, use it; else, select with a left join count
+    const { data, error } = await sb
+      .from("audit_inspections")
+      .select("*, photo_count:audit_photos(count)")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    if (!error && data) {
+      const normalized = data.map((r: any) => ({
+        id: r.id,
+        reg: r.reg,
+        odometer: r.odometer,
+        condition: r.condition,
+        issues: r.issues,
+        lat: r.lat,
+        lng: r.lng,
+        created_at: r.created_at,
+        photo_count: Array.isArray(r.photo_count) ? r.photo_count[0]?.count ?? 0 : 0,
+      })) as Inspection[];
+      setRows(normalized);
+    }
     setLoading(false);
   };
 
@@ -61,14 +80,20 @@ export default function AuditsPage() {
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
       };
-      const { data: inserted, error } = await sb.from("audit_inspections").insert(payload).select("*").single();
+      const { data: inserted, error } = await sb
+        .from("audit_inspections")
+        .insert(payload)
+        .select("*")
+        .single();
       if (error) throw error;
       const inspId = inserted.id as string;
 
       if (files && files.length) {
         for (const file of Array.from(files)) {
-          const path = `${inspId}/${Date.now()}_${file.name.replace(/\s+/g,"_")}`;
-          const up = await sb.storage.from("audit-photos").upload(path, file, { upsert: false, contentType: file.type });
+          const path = `${inspId}/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+          const up = await sb.storage
+            .from("audit-photos")
+            .upload(path, file, { upsert: false, contentType: file.type });
           if (up.error) throw up.error;
           await sb.from("audit_photos").insert({ inspection_id: inspId, path, filename: file.name });
         }
@@ -76,30 +101,11 @@ export default function AuditsPage() {
       setReg(""); setOdo(""); setIssues(""); setFiles(null);
       await loadRows();
       alert("Inspection saved.");
-    } catch (err:any) {
+    } catch (err: any) {
       alert(err.message || "Failed to save");
     } finally {
       setSaving(false);
     }
-  };
-
-  const exportPDF = async () => {
-    const node = tableRef.current;
-    if (!node) return;
-    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
-      import("jspdf"),
-      import("html2canvas")
-    ]);
-    const canvas = await html2canvas(node, { scale: 2 });
-    const img = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({ unit: "pt", format: "a4" });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
-    const w = canvas.width * ratio;
-    const h = canvas.height * ratio;
-    pdf.addImage(img, "PNG", (pageWidth - w)/2, 20, w, h);
-    pdf.save(`vehicle_audits_${Date.now()}.pdf`);
   };
 
   return (
@@ -139,7 +145,6 @@ export default function AuditsPage() {
 
       <div className="flex items-center justify-between mb-2">
         <div className="text-white/70 text-sm">{rows.length} inspections</div>
-        <button className="btn" onClick={exportPDF}>Export PDF</button>
       </div>
 
       <div ref={tableRef} className="card p-4 overflow-x-auto">

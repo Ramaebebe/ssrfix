@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import supabase from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function ClientGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -21,3 +21,4 @@ export default function ClientGuard({ children }: { children: React.ReactNode })
 
   return <>{children}</>;
 }
+

@@ -1,136 +1,157 @@
-// Lightweight PDF builder for Vehicle Audit reports
-// Uses pdf-lib. The route should pass images as { filename, bytes } where `bytes` is a Uint8Array.
-
-import { PDFDocument, StandardFonts, rgb, PageSizes, PDFPage } from "pdf-lib";
+// src/lib/pdf/auditTemplate.ts
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 export type AuditPhoto = { filename: string; bytes: Uint8Array };
+
 export type AuditRecord = {
   id: string;
-  vehicleReg: string;
-  entity?: string;
-  inspector?: string;
-  inspectedAt?: string;        // ISO string
-  location?: string;           // "lat,lon" or address
-  odometerKm?: number;
-  findings?: string;           // long text
-  status?: string;             // e.g. "OK" | "Needs attention"
+  date?: string; // <-- added (optional)
+  inspector: string;
+  vehicle: { reg: string; vin: string; make: string; model: string };
+  location: string; // human-readable single string
+  findings: string; // multiline string is fine
+  notes: string;
+  photos: AuditPhoto[];
 };
 
-const pageSize = PageSizes.A4; // [595.28, 841.89]
-const text = rgb(0.18, 0.2, 0.25);
-const muted = rgb(0.45, 0.47, 0.5);
-const brand = rgb(0.925, 0.39, 0.145); // Afrirent orange
-
-function wrap(s: string, max = 96) {
-  const out: string[] = [];
-  const words = String(s ?? "").split(/\s+/);
-  let line = "";
-  for (const w of words) {
-    if ((line + " " + w).trim().length > max) {
-      out.push(line.trim());
-      line = w;
-    } else {
-      line = (line + " " + w).trim();
-    }
-  }
-  if (line) out.push(line.trim());
-  return out;
-}
-
-function drawHeader(page: PDFPage, font: any) {
-  page.drawRectangle({ x: 0, y: 800, width: 595.28, height: 41.89, color: brand, opacity: 0.08 });
-  page.drawText("AFRIRENT – Vehicle Audit Report", { x: 40, y: 818, size: 14, font, color: brand });
-}
-
-export async function buildAuditPdf(audit: AuditRecord, photos: AuditPhoto[]) {
+export async function buildAuditPdf(data: AuditRecord, logoBytes?: Uint8Array): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
-  const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
-
+  const pageSize: [number, number] = [595.28, 841.89]; // A4
   let page = pdf.addPage(pageSize);
-  drawHeader(page, fontBold);
 
-  // Meta
-  let y = 780;
-  const left = 40;
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const text = rgb(0.12, 0.12, 0.12);
+  const muted = rgb(0.45, 0.45, 0.45);
+  const brand = rgb(0.925, 0.392, 0.145);
 
-  const meta = [
-    ["Audit ID", audit.id],
-    ["Vehicle", audit.vehicleReg],
-    ["Entity", audit.entity ?? "-"],
-    ["Inspector", audit.inspector ?? "-"],
-    ["Date", audit.inspectedAt ? new Date(audit.inspectedAt).toLocaleString() : "-"],
-    ["Location", audit.location ?? "-"],
-    ["Odometer (km)", audit.odometerKm != null ? String(audit.odometerKm) : "-"],
-    ["Status", audit.status ?? "-"],
-  ] as const;
+  const drawHeader = () => {
+    const [w] = page.getSize();
+    // Logo
+    if (logoBytes && logoBytes.length > 0) {
+      // try embed PNG/JPEG
+      try {
+        const img = logoBytes[0] === 0x89 ? pdf.embedPng(logoBytes) : pdf.embedJpg(logoBytes);
+        // await because embed could be promise
+      } catch {}
+    }
+    // Title
+    page.drawText("Afrirent Vehicle Audit Report", { x: 40, y: 800, size: 16, font: bold, color: brand });
+    const dateStr = (data.date ?? new Date().toISOString()).slice(0, 10);
+    page.drawText(`Audit #${data.id} • ${dateStr}`, { x: 40, y: 782, size: 10, font, color: muted });
+  };
 
-  for (const [k, v] of meta) {
-    page.drawText(k + ":", { x: left, y, size: 11, font: fontBold, color: text });
-    page.drawText(String(v), { x: left + 140, y, size: 11, font, color: text });
-    y -= 18;
-  }
+  drawHeader();
 
-  // Findings
-  y -= 8;
-  page.drawText("Findings", { x: left, y, size: 12, font: fontBold, color: text });
-  y -= 16;
-  for (const l of wrap(audit.findings || "-", 92)) {
-    page.drawText(l, { x: left, y, size: 10, font, color: text });
+  // Vehicle & inspector block
+  let y = 750;
+  const line = (label: string, value: string) => {
+    page.drawText(label, { x: 40, y, size: 10, font: bold, color: text });
+    page.drawText(value || "-", { x: 160, y, size: 10, font, color: text });
+    y -= 16;
+  };
+
+  line("Inspector", data.inspector || "-");
+  line("Registration", data.vehicle.reg || "-");
+  line("VIN", data.vehicle.vin || "-");
+  line("Make/Model", `${data.vehicle.make || "-"} ${data.vehicle.model || ""}`.trim());
+  line("Location", data.location || "-");
+
+  // Findings block (wrap to width)
+  y -= 12;
+  page.drawText("Findings", { x: 40, y, size: 12, font: bold, color: text });
+  y -= 18;
+
+  const wrap = (s: string, max = 92) => {
+    const out: string[] = [];
+    for (const rawLine of (s || "").split(/\r?\n/)) {
+      let cur = rawLine;
+      while (cur.length > max) {
+        const cut = cur.lastIndexOf(" ", max);
+        const n = cut > 0 ? cut : max;
+        out.push(cur.slice(0, n));
+        cur = cur.slice(n).trimStart();
+      }
+      out.push(cur);
+    }
+    return out;
+  };
+
+  for (const l of wrap(data.findings || "-", 92)) {
+    page.drawText(l, { x: 40, y, size: 10, font, color: text });
     y -= 14;
-    // new page for long findings
     if (y < 120) {
       page = pdf.addPage(pageSize);
-      drawHeader(page, fontBold);
+      drawHeader();
       y = 780;
     }
   }
 
-  // Photos grid (3 per row)
-  if (photos?.length) {
-    y -= 12;
-    page.drawText("Photos", { x: left, y, size: 12, font: fontBold, color: text });
-    y -= 16;
+  // Notes
+  y -= 10;
+  page.drawText("Notes", { x: 40, y, size: 12, font: bold, color: text });
+  y -= 18;
+  for (const l of wrap(data.notes || "-", 92)) {
+    page.drawText(l, { x: 40, y, size: 10, font, color: text });
+    y -= 14;
+    if (y < 120) {
+      page = pdf.addPage(pageSize);
+      drawHeader();
+      y = 780;
+    }
+  }
 
-    let x = left;
-    const maxW = 595.28 - left - 40;
+  // Photos grid (thumbnails)
+  if (data.photos?.length) {
+    y -= 10;
+    page.drawText("Photos", { x: 40, y, size: 12, font: bold, color: text });
+    y -= 18;
+
+    let x = 40;
+    const left = 40;
+    const gap = 12;
+    const thumbW = 120;
     let rowH = 0;
 
-    for (const p of photos) {
+    for (const p of data.photos) {
+      // embed image
+      let img;
       try {
-        const img = await pdf.embedJpg(p.bytes).catch(async () => await pdf.embedPng(p.bytes));
-        const { width, height } = img;
-        const targetW = Math.min(160, maxW);
-        const scale = targetW / width;
-        const w = width * scale;
-        const h = height * scale;
-
-        // newline if overflow on x-axis
-        if (x + w > left + maxW) {
-          x = left;
-          y -= (rowH + 18);
-          rowH = 0;
-        }
-        // new page if not enough vertical space
-        if (y - h < 80) {
-          page = pdf.addPage(pageSize);
-          drawHeader(page, fontBold);
-          y = 780;
-          x = left;
-          rowH = 0;
-        }
-
-        page.drawImage(img, { x, y: y - h, width: w, height: h });
-        page.drawText(p.filename, { x, y: y - h - 12, size: 9, font, color: muted });
-        x += w + 14;
-        rowH = Math.max(rowH, h);
+        img = p.bytes[0] === 0x89 ? await pdf.embedPng(p.bytes) : await pdf.embedJpg(p.bytes);
       } catch {
-        // skip corrupt image
         continue;
       }
+      const scale = thumbW / img.width;
+      const w = img.width * scale;
+      const h = img.height * scale;
+
+      const [pageW] = page.getSize();
+      const maxW = pageW - 40;
+
+      if (x + w > maxW) {
+        // newline
+        x = left;
+        y -= rowH + 18;
+        rowH = 0;
+      }
+      if (y - h < 60) {
+        // new page
+        page = pdf.addPage(pageSize);
+        drawHeader();
+        y = 780;
+        x = left;
+        rowH = 0;
+      }
+
+      page.drawImage(img, { x, y: y - h, width: w, height: h });
+      page.drawText(p.filename, { x, y: y - h - 12, size: 9, font, color: muted });
+
+      x += w + gap;
+      rowH = Math.max(rowH, h + 12);
     }
   }
 
   const bytes = await pdf.save();
   return bytes;
 }
+

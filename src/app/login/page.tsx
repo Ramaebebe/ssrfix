@@ -1,86 +1,67 @@
+// src/app/login/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { useState } from "react";
+import getSupabaseClient from "@/lib/supabaseClient";
+import Image from "next/image";
 
 export default function LoginPage() {
-  const supabase = getSupabaseClient();
+  const sb = getSupabaseClient();
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
 
-  // Build the callback URL once, safely on the client
-  const emailRedirectTo = useMemo(() => {
-    if (typeof window === "undefined") return undefined;
-    return `${window.location.origin}/auth/callback`;
-  }, []);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErr(null);
+  const sendLink = async () => {
     setMsg(null);
-
-    if (!supabase) {
-      setErr("Supabase not configured.");
-      return;
-    }
-    if (!emailRedirectTo) {
-      setErr("Cannot determine callback URL.");
-      return;
-    }
-
-    // light validation helps avoid obvious typos
-    const looksLikeEmail = /\S+@\S+\.\S+/.test(email);
-    if (!looksLikeEmail) {
-      setErr("Please enter a valid email address.");
-      return;
-    }
-
+    if (!email) return setMsg("Please enter your email.");
     setSending(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await sb.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo, // always send users to the callback
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-
       if (error) throw error;
-      setMsg("Magic link sent. Please check your email to continue.");
+      setMsg("Check your inbox for the magic link.");
     } catch (e: any) {
-      setErr(e?.message ?? "Failed to send magic link.");
+      setMsg(e.message || "Failed to send the link.");
     } finally {
       setSending(false);
     }
   };
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-black text-white">
-      <form onSubmit={handleLogin} className="p-6 card flex flex-col gap-4 w-full max-w-sm">
-        <h1 className="text-2xl font-semibold">Sign in</h1>
-
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@company.com"
-          className="input"
-          required
-          disabled={sending}
-        />
-
-        <button type="submit" className="btn-primary" disabled={sending}>
-          {sending ? "Sending…" : "Send magic link"}
-        </button>
-
-        {msg && <p className="text-green-400 text-sm">{msg}</p>}
-        {err && <p className="text-red-400 text-sm">{err}</p>}
-
-        <p className="text-xs text-white/60">
-          We’ll email you a one-time sign-in link. No password needed.
+    <main className="min-h-screen grid place-items-center relative">
+      {/* Hero image */}
+      <Image
+        src="/login_background.jpg"
+        alt=""
+        fill
+        className="object-cover opacity-40"
+        priority
+      />
+      {/* Overlay card */}
+      <div className="relative z-10 card p-6 w-full max-w-md bg-black/60 backdrop-blur">
+        <div className="flex items-center gap-3 mb-4">
+          <Image src="/afrirent_logo.png" alt="Afrirent" width={36} height={36} />
+          <h1 className="text-xl font-semibold">Afrirent Portal</h1>
+        </div>
+        <p className="text-white/70 text-sm mb-4">
+          Sign in with your email to receive a one-time link.
         </p>
-      </form>
+        <input
+          className="input mb-3"
+          type="email"
+          placeholder="you@company.co.za"
+          value={email}
+          onChange={(e)=>setEmail(e.target.value)}
+        />
+        <button className="btn w-full" onClick={sendLink} disabled={sending}>
+          {sending ? "Sending…" : "Send Magic Link"}
+        </button>
+        {msg && <div className="mt-3 text-sm text-white/80">{msg}</div>}
+      </div>
     </main>
   );
 }

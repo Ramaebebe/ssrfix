@@ -1,3 +1,4 @@
+// src/app/client/reports/page.tsx
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -6,7 +7,7 @@ import { ResponsiveContainer, LineChart, Line } from "recharts";
 import { AgGridReact } from "ag-grid-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import getSupabaseClient from "@/lib/supabaseClient";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -129,7 +130,7 @@ export default function ReportsPage() {
     }
   };
 
-  useEffect(() => { loadFromSupabase(); }, []);
+  useEffect(() => { loadFromSupabase(); }, []); // eslint-disable-line
 
   const onImportExcel = async (file: File) => {
     const XLSX = await import("xlsx");

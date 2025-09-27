@@ -8,3 +8,4 @@ export async function getSignedUrl(bucket: string, path: string, expiresInSecond
   const { url } = await res.json();
   return url as string;
 }
+

@@ -128,3 +128,4 @@ export async function buildQuotePdf(data: QuotePayload, logoBytes: Uint8Array) {
 
   return await pdf.save();
 }
+

@@ -15,3 +15,4 @@ export function getSupabaseBrowserClient(): SupabaseClient {
   return _client;
 }
 export default getSupabaseBrowserClient;
+

@@ -8,3 +8,4 @@ const AvailabilityChart: FC = () => (
   </ResponsiveContainer>
 );
 export default AvailabilityChart;
+

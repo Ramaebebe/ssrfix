@@ -30,3 +30,4 @@ export const inferRoleFromEmail = (email?: string | null): Role => {
   if (domain === "afrirent.co.za") return "ops";
   return "client_user";
 };
+

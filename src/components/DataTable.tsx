@@ -17,3 +17,4 @@ const DataTable: FC<Props> = ({ rows }) => {
   return (<div className="ag-theme-alpine" style={{height: 300, width: "100%"}}><AgGridReact rowData={rows} columnDefs={columns as any} /></div>);
 };
 export default DataTable;
+

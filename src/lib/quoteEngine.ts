@@ -9,3 +9,4 @@ export function priceQuote(input: QuoteInput): QuoteOutput {
   const monthlyPayment = basePayment + maintenanceRpm + tyresRpm + insuranceRpm + adminRpm;
   return { monthlyPayment: Number(monthlyPayment.toFixed(2)), totalCost: Number((monthlyPayment * termMonths).toFixed(2)) };
 }
+

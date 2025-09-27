@@ -17,3 +17,4 @@ export default function QuotePDF({ refEl, vehicle }: Props){
   },[refEl,vehicle]);
   return (<button className="btn" onClick={onExport}>Download PDF</button>);
 }
+

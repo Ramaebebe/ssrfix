@@ -11,3 +11,4 @@ const DowntimeByCategory: FC = () => (
   </ResponsiveContainer>
 );
 export default DowntimeByCategory;
+

@@ -18,3 +18,4 @@ export const BRAND = {
   },
   logoPath: "/brand/logo.png"
 };
+

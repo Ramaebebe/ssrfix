@@ -8,3 +8,4 @@ import type { Database } from "../types";
 export function getServerSupabase() {
   return createServerComponentClient<Database>({ cookies });
 }
+
