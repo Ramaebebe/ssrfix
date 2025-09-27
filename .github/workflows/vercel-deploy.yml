@@ -1,14 +1,14 @@
-name: Vercel Deploy
-on: { push: { branches: [ main ] }, pull_request: { branches: [ main ] } }
+name: Deploy to Vercel
+on:
+  push:
+    branches: [ main ]
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          scope: ${{ secrets.VERCEL_ORG_ID }}
+      - name: Pull Vercel environment
+        run: npx vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+      - name: Deploy (Vercel builds automatically)
+        run: npx vercel --prod --token="${{ secrets.VERCEL_TOKEN }}"
