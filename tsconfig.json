@@ -23,6 +23,18 @@
     "paths": {
       "@/*": [
         "src/*"
+      ],
+      "@/components/*": [
+        "src/components/*"
+      ],
+      "@/lib/*": [
+        "src/lib/*"
+      ],
+      "@/app/*": [
+        "src/app/*"
+      ],
+      "@/types/*": [
+        "src/types/*"
       ]
     },
     "incremental": true,

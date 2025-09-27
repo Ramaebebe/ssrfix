@@ -1,21 +1,7 @@
 export const BRAND = {
-  company: "Afrirent Fleet (Pty) Ltd",
-  slogan: "Drive smarter. Spend less.",
-  addressLines: [
-    "1 Indalo House, Rosebank, Johannesburg",
-    "South Africa"
-  ],
-  email: "info@afrirent.co.za",
-  phone: "+27 11 000 0000",
-  web: "https://www.afrirent.co.za",
-  // CI palette
-  colors: {
-    brand: "#EC6425",
-    brandDark: "#C7511E",
-    text: "#111827",
-    muted: "#6B7280",
-    border: "#E5E7EB"
-  },
-  logoPath: "/brand/logo.png"
+  company: "Afrirent",
+  logoPath: "/brand/afrirent_logo.png", // put your PNG here; falls back gracefully if missing
+  primary: { r: 236, g: 100, b: 37 },   // #EC6425
+  text:    { r: 255, g: 255, b: 255 },
+  muted:   { r: 200, g: 200, b: 200 }
 };
-

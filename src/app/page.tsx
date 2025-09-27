@@ -1,41 +1,20 @@
-import Link from "next/link";
-export default function LandingPage() {
+export default function Home() {
   return (
-    <main>
-      <section className="hero-full">
-        <div className="hero-bg">
-          <img src="/brand/afrirent_holdings.png" alt="Afrirent Holdings" />
-        </div>
-        <div className="hero-overlay" />
-        <div className="hero-content">
-          <div className="container-tight">
-            <img src="/brand/afrirent_logo.png" alt="Afrirent" className="w-40 mb-6 drop-shadow-xl" />
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-3">The Integrated Fleet Management Portal</h1>
-            <p className="text-white/80 max-w-3xl text-lg md:text-xl mb-6">
-              Live availability, downtime, utilisation, and on-the-fly leasing quotes. Securely delivered to each client and cost centre.
-            </p>
-            <div className="flex gap-3">
-              <Link href="/login" className="btn">Login</Link>
-              <a href="#features" className="navlink">See features</a>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section id="features" className="container-tight float-cards">
-        <div className="grid md:grid-cols-3 gap-5">
-          {[
-            { t:"Executive KPIs", d:"Availability, Utilisation, Downtime, Rebills."},
-            { t:"Client Segmentation", d:"Row-level access by entity, cost centre."},
-            { t:"Quoting", d:"Real-time lease quotes from vehicle catalogue."}
-          ].map((x,i)=>(
-            <div key={i} className="card p-6 watermark">
-              <h3 className="font-semibold text-lg">{x.t}</h3>
-              <p className="text-white/70">{x.d}</p>
-            </div>
-          ))}
-        </div>
+    <main className="container-tight py-10">
+      <h1 className="text-3xl font-bold mb-4">Afrirent Portal</h1>
+      <div className="flex gap-3 mb-6">
+        <a className="btn" href="/login">Sign in</a>
+        <a className="navlink" href="#features">See features</a>
+      </div>
+      <section id="features" className="card p-6">
+        <h2 className="text-xl font-semibold mb-2">Features</h2>
+        <ul className="list-disc ml-6 text-white/80">
+          <li>Quoting & PDF output</li>
+          <li>Audits & photo evidence</li>
+          <li>Waste Compactor module</li>
+          <li>Analytics via external BI (Metabase/Superset/Redash/Looker Studio)</li>
+        </ul>
       </section>
     </main>
   );
 }
-

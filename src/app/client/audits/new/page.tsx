@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import supabase from "@/lib/supabase/client";
 
 export default function NewAuditPage() {
   const [reg, setReg] = useState("");
@@ -33,4 +33,3 @@ export default function NewAuditPage() {
     </div>
   );
 }
-

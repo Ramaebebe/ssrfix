@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import getSupabaseClient from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 
 type Inspection = {
   id: string;

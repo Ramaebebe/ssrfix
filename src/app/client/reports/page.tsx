@@ -7,7 +7,6 @@ import { ResponsiveContainer, LineChart, Line } from "recharts";
 import { AgGridReact } from "ag-grid-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import getSupabaseClient from "@/lib/supabaseClient";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";

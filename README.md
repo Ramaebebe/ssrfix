@@ -1,17 +1,21 @@
-Afrirent Portal — Enhanced Full-Screen Hero & Polished Modules
+# Afrirent Portal
 
-Highlights
-- Full-bleed hero with glass cards floating below.
-- Consistent soft-glass cards across all modules.
-- Quoting exports branded PDFs.
-- 404 page and /client redirect to /client/dashboard.
-- Build-safe with optional Supabase env.
+Stack: **Next.js 14**, **TypeScript**, **Tailwind**, **Supabase**, **(Optional) External BI: Metabase / Superset / Redash / Looker Studio**
 
-Getting Started
-npm install
-npm run dev
+## Quick Start
+1. Copy `.env.example` → `.env.local` and fill in:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - (optional BI) `NEXT_PUBLIC_MB_FLEET_URL`, `NEXT_PUBLIC_SUPERSET_URL`, etc.
+2. Run SQL:
+   - `supabase/schema_extended.sql`
+   - (plus your existing core schema)
+3. `npm i`
+4. `npm run dev`
+5. Visit `/login`, `/client/quoting`, `/client/analytics`
 
-Optional env (for auth later):
-NEXT_PUBLIC_SITE_URL
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
+## Notes
+- Supabase clients are centralized in `src/lib/supabase/*`.
+- Quoting UI calls `/api/quotes/price` (server-calculated).
+- Analytics page embeds external BI tools via iframe.
+- Charts & tables are typed and reusable.
