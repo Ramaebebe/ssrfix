@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverActions: { bodySizeLimit: "2mb" },
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  reactStrictMode: true,
+  experimental: { typedRoutes: true },
+  // Safety-net so lint doesn't block CI while you're fixing rules.
+  eslint: { ignoreDuringBuilds: true }
 };
+
 module.exports = nextConfig;

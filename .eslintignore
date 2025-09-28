@@ -1,4 +1,7 @@
-.next
-out
-dist
-node_modules
+.next/
+node_modules/
+dist/
+build/
+coverage/
+*.gen.ts
+public/
