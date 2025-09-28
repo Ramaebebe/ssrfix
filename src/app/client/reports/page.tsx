@@ -5,8 +5,10 @@ export const dynamic = "force-dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ResponsiveContainer, LineChart, Line } from "recharts";
 import { AgGridReact } from "ag-grid-react";
+import type { ColDef } from "ag-grid-community";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { supabase } from "@/lib/supabase/client";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -33,7 +35,15 @@ type Txn = {
 };
 
 const DEFAULT_SECTIONS = [
-  "Availability","Utilisation","Downtime","Maintenance","Tyres","Fuel","Finance","Risk","Other"
+  "Availability",
+  "Utilisation",
+  "Downtime",
+  "Maintenance",
+  "Tyres",
+  "Fuel",
+  "Finance",
+  "Risk",
+  "Other",
 ];
 
 const seededTiles = (): Tile[] => {
@@ -74,7 +84,6 @@ const seededTxns = (tiles: Tile[]): Txn[] => {
 };
 
 export default function ReportsPage() {
-  const sb = getSupabaseClient();
   const pdfRef = useRef<HTMLDivElement>(null);
 
   const [loading, setLoading] = useState(false);
@@ -82,15 +91,17 @@ export default function ReportsPage() {
   const [txns, setTxns] = useState<Txn[]>(seededTxns(tiles));
 
   const loadFromSupabase = async () => {
-    if (!sb) return;
     setLoading(true);
     try {
-      const { data: t } = await sb.from("report_tiles").select("*");
+      // Tiles
+      const { data: t } = await supabase.from("report_tiles").select("*");
       if (t && t.length) {
-        const parsed = t.map((r: any) => {
+        const parsed = t.map((r: any): Tile => {
           let sparkNums: number[] | undefined = undefined;
           if (Array.isArray(r.spark)) {
-            sparkNums = (r.spark as number[]).map((x: number) => Number(x)).filter((x: number) => !Number.isNaN(x));
+            sparkNums = (r.spark as number[])
+              .map((x: number) => Number(x))
+              .filter((x: number) => !Number.isNaN(x));
           } else if (typeof r.spark === "string") {
             const parts: string[] = (r.spark as string).split(",");
             const mapped: number[] = parts.map((s: string) => Number(s.trim()));
@@ -103,25 +114,30 @@ export default function ReportsPage() {
             unit: r.unit ?? undefined,
             delta: r.delta != null ? Number(r.delta) : undefined,
             spark: sparkNums,
-          } as Tile;
+          };
         });
         setTiles(parsed);
       }
-      const { data: d } = await sb
+
+      // Transactions
+      const { data: d } = await supabase
         .from("report_transactions")
         .select("*")
         .order("ts", { ascending: false })
         .limit(2000);
+
       if (d && d.length) {
-        const parsed = d.map((r: any) => ({
-          section: r.section,
-          title: r.title,
-          ts: r.ts,
-          ref: r.ref ?? undefined,
-          description: r.description ?? undefined,
-          amount: r.amount != null ? Number(r.amount) : undefined,
-          entity: r.entity ?? undefined,
-        })) as Txn[];
+        const parsed = d.map(
+          (r: any): Txn => ({
+            section: r.section,
+            title: r.title,
+            ts: r.ts,
+            ref: r.ref ?? undefined,
+            description: r.description ?? undefined,
+            amount: r.amount != null ? Number(r.amount) : undefined,
+            entity: r.entity ?? undefined,
+          })
+        );
         setTxns(parsed);
       }
     } finally {
@@ -129,7 +145,9 @@ export default function ReportsPage() {
     }
   };
 
-  useEffect(() => { loadFromSupabase(); }, []); // eslint-disable-line
+  useEffect(() => {
+    loadFromSupabase();
+  }, []);
 
   const onImportExcel = async (file: File) => {
     const XLSX = await import("xlsx");
@@ -139,7 +157,7 @@ export default function ReportsPage() {
     const wsReports = wb.Sheets["Reports"] || wb.Sheets[wb.SheetNames[0]];
     const rows: any[] = XLSX.utils.sheet_to_json(wsReports, { defval: "" });
 
-    const parsedTiles: Tile[] = rows.map((r: any) => {
+    const parsedTiles: Tile[] = rows.map((r: any): Tile => {
       let sparkNums: number[] | undefined = undefined;
       if (typeof r.spark === "string") {
         const parts: string[] = (r.spark as string).split(",");
@@ -148,19 +166,19 @@ export default function ReportsPage() {
       }
       return {
         section: String(r.section || r.Section || "Other"),
-        title:   String(r.title||r.Title||"Untitled"),
-        value:   Number(r.value||r.Value||0),
-        unit:    String(r.unit||r.Unit||""),
-        delta:   r.delta!=="" ? Number(r.delta) : undefined,
-        spark:   sparkNums,
-      } as Tile;
+        title: String(r.title || r.Title || "Untitled"),
+        value: Number(r.value || r.Value || 0),
+        unit: String(r.unit || r.Unit || ""),
+        delta: r.delta !== "" ? Number(r.delta) : undefined,
+        spark: sparkNums,
+      };
     });
 
     const wsTx = wb.Sheets["Transactions"];
     let parsedTx: Txn[] = [];
     if (wsTx) {
       const txRows: any[] = XLSX.utils.sheet_to_json(wsTx, { defval: "" });
-      parsedTx = txRows.map((r: any) => ({
+      parsedTx = txRows.map((r: any): Txn => ({
         section: String(r.section || r.Section || "Other"),
         title: String(r.title || r.Title || "Untitled"),
         ts: r.ts ? new Date(r.ts).toISOString() : new Date().toISOString(),
@@ -171,18 +189,17 @@ export default function ReportsPage() {
       }));
     }
 
-    const sb2 = getSupabaseClient();
-    if (sb2) {
-      try {
-        if (parsedTiles.length) {
-          await sb2.from("report_tiles").upsert(parsedTiles.map((t: Tile) => ({ ...t, spark: t.spark ?? [] })));
-        }
-        if (parsedTx.length) {
-          await sb2.from("report_transactions").upsert(parsedTx);
-        }
-      } catch (e) {
-        console.warn("Supabase upsert error:", e);
+    try {
+      if (parsedTiles.length) {
+        await supabase
+          .from("report_tiles")
+          .upsert(parsedTiles.map((t) => ({ ...t, spark: t.spark ?? [] })));
       }
+      if (parsedTx.length) {
+        await supabase.from("report_transactions").upsert(parsedTx);
+      }
+    } catch (e) {
+      console.warn("Supabase upsert error:", e);
     }
 
     if (parsedTiles.length) setTiles(parsedTiles);
@@ -190,7 +207,8 @@ export default function ReportsPage() {
   };
 
   const onExportPDF = async () => {
-    const node = pdfRef.current; if (!node) return;
+    const node = pdfRef.current;
+    if (!node) return;
     const canvas = await html2canvas(node, { scale: 2 });
     const img = canvas.toDataURL("image/png");
     const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: "a4" });
@@ -202,11 +220,22 @@ export default function ReportsPage() {
 
   const onExportExcel = async () => {
     const XLSX = await import("xlsx");
-    const reports = tiles.map((t: Tile) => ({
-      section: t.section, title: t.title, value: t.value, unit: t.unit ?? "", delta: t.delta ?? "", spark: (t.spark ?? []).join(",")
+    const reports = tiles.map((t) => ({
+      section: t.section,
+      title: t.title,
+      value: t.value,
+      unit: t.unit ?? "",
+      delta: t.delta ?? "",
+      spark: (t.spark ?? []).join(","),
     }));
-    const tx = txns.map((r: Txn) => ({
-      section: r.section, title: r.title, ts: r.ts, ref: r.ref ?? "", description: r.description ?? "", amount: r.amount ?? "", entity: r.entity ?? ""
+    const tx = txns.map((r) => ({
+      section: r.section,
+      title: r.title,
+      ts: r.ts,
+      ref: r.ref ?? "",
+      description: r.description ?? "",
+      amount: r.amount ?? "",
+      entity: r.entity ?? "",
     }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reports), "Reports");
@@ -216,7 +245,10 @@ export default function ReportsPage() {
 
   const grouped = useMemo(() => {
     const bySection = new Map<string, Tile[]>();
-    for (const t of tiles) { if (!bySection.has(t.section)) bySection.set(t.section, []); bySection.get(t.section)!.push(t); }
+    for (const t of tiles) {
+      if (!bySection.has(t.section)) bySection.set(t.section, []);
+      bySection.get(t.section)!.push(t);
+    }
     const ordered: [string, Tile[]][] = [];
     const DEFAULT = new Set(DEFAULT_SECTIONS);
     for (const s of DEFAULT_SECTIONS) if (bySection.has(s)) ordered.push([s, bySection.get(s)!]);
@@ -231,15 +263,26 @@ export default function ReportsPage() {
       if (!m.has(key)) m.set(key, []);
       m.get(key)!.push(r);
     }
-    for (const [k, arr] of m) { arr.sort((a, b) => (a.ts > b.ts ? -1 : 1)); m.set(k, arr); }
+    for (const [k, arr] of m) {
+      arr.sort((a, b) => (a.ts > b.ts ? -1 : 1));
+      m.set(k, arr);
+    }
     return m;
   }, [txns]);
 
-  const columns = [
-    { headerName: "Date", field: "ts", valueFormatter: (p: any) => new Date(p.value).toLocaleDateString() },
+  const columns: ColDef<Txn>[] = [
+    {
+      headerName: "Date",
+      field: "ts",
+      valueFormatter: (p) => (p.value ? new Date(p.value as string).toLocaleDateString() : ""),
+    },
     { headerName: "Ref", field: "ref" },
     { headerName: "Description", field: "description", flex: 1 },
-    { headerName: "Amount", field: "amount", valueFormatter: (p: any) => (p.value != null ? `R ${Number(p.value).toLocaleString()}` : "") },
+    {
+      headerName: "Amount",
+      field: "amount",
+      valueFormatter: (p) => (p.value != null ? `R ${Number(p.value).toLocaleString()}` : ""),
+    },
     { headerName: "Entity", field: "entity" },
   ];
 
@@ -249,11 +292,22 @@ export default function ReportsPage() {
         <h1 className="text-2xl font-semibold mr-auto">Reports</h1>
         <label className="btn cursor-pointer">
           Import Excel/CSV
-          <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={(e)=> e.target.files && onImportExcel(e.target.files[0])} />
+          <input
+            type="file"
+            className="hidden"
+            accept=".xlsx,.xls,.csv"
+            onChange={(e) => e.target.files && onImportExcel(e.target.files[0])}
+          />
         </label>
-        <button className="btn" onClick={onExportExcel}>Export Excel</button>
-        <button className="btn" onClick={onExportPDF}>Export PDF</button>
-        <button className="navlink" onClick={loadFromSupabase} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</button>
+        <button className="btn" onClick={onExportExcel}>
+          Export Excel
+        </button>
+        <button className="btn" onClick={onExportPDF}>
+          Export PDF
+        </button>
+        <button className="navlink" onClick={loadFromSupabase} disabled={loading}>
+          {loading ? "Refreshing…" : "Refresh"}
+        </button>
       </div>
 
       <div ref={pdfRef} className="space-y-8">
@@ -275,22 +329,25 @@ export default function ReportsPage() {
                       <div className="text-sm text-white/70">{tile.title}</div>
                       {tile.delta !== undefined && (
                         <div className={tile.delta >= 0 ? "text-green-400 text-xs" : "text-red-400 text-xs"}>
-                          {tile.delta >= 0 ? "+" : ""}{tile.delta}
+                          {tile.delta >= 0 ? "+" : ""}
+                          {tile.delta}
                         </div>
                       )}
                     </div>
                     <div className="text-2xl font-bold mb-2">
-                      {tile.unit === "R" ? "R " : ""}{tile.value.toLocaleString()}{tile.unit && tile.unit !== "R" ? ` ${tile.unit}` : ""}
+                      {tile.unit === "R" ? "R " : ""}
+                      {tile.value.toLocaleString()}
+                      {tile.unit && tile.unit !== "R" ? ` ${tile.unit}` : ""}
                     </div>
                     <div className="h-24 mb-3">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={(tile.spark ?? []).map((v: number, idx: number) => ({ i: idx, v }))}>
+                        <LineChart data={(tile.spark ?? []).map((v, idx) => ({ i: idx, v }))}>
                           <Line type="monotone" dataKey="v" stroke="#EC6425" strokeWidth={2} dot={false} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="ag-theme-alpine" style={{ height: 260 }}>
-                      <AgGridReact rowData={rows as any} columnDefs={columns as any} headerHeight={28} rowHeight={28} />
+                      <AgGridReact<Txn> rowData={rows} columnDefs={columns} headerHeight={28} rowHeight={28} />
                     </div>
                   </div>
                 );

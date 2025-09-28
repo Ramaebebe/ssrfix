@@ -1,48 +1,79 @@
+// src/app/auth/callback/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-export default function AuthCallback() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function CallbackInner() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const params = useSearchParams();
-  const [msg, setMsg] = useState<string>("Completing sign-in…");
+  const [message, setMessage] = useState("Completing sign-in…");
 
   useEffect(() => {
-    const run = async () => {
-      // If Supabase appended an error to the hash or query, surface it
-      const hashErr = params.get("error_description") || params.get("error");
-      if (hashErr) {
-        setMsg(`Sign-in error: ${decodeURIComponent(hashErr)}`);
-        return;
-      }
+    let alive = true;
 
-      // Exchange the code in the URL for a session
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-      if (error) {
-        setMsg(`Sign-in error: ${error.message}`);
-        return;
-      }
+    const finish = async () => {
+      try {
+        // Supabase magic link supports both query-string and hash fragments.
+        // Using the current URL avoids chasing specific params.
+        const { error } = await supabase.auth.exchangeCodeForSession(
+          window.location.href
+        );
+        if (error) {
+          console.error(error);
+          if (!alive) return;
+          setMessage(`Sign-in error: ${error.message}`);
+          // Optional: send back to login after a short delay
+          setTimeout(() => router.replace("/login?error=" + encodeURIComponent(error.message)), 1500);
+          return;
+        }
 
-      setMsg("Signed in. Redirecting…");
-      // Adjust this to your post-login landing page:
-      router.replace("/client");
+        // Optional: honor a "redirect" param (e.g. /auth/callback?redirect=/client/dashboard)
+        const redirectTo = searchParams.get("redirect") || "/client/dashboard";
+        if (!alive) return;
+        setMessage("Signed in. Redirecting…");
+        router.replace(redirectTo);
+      } catch (e: any) {
+        console.error(e);
+        if (!alive) return;
+        setMessage("Unexpected error during sign-in.");
+        setTimeout(() => router.replace("/login?error=unexpected"), 1500);
+      }
     };
 
-    // Only run on client
-    run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    finish();
+    return () => {
+      alive = false;
+    };
+  }, [router, searchParams]);
 
   return (
-    <main className="container-tight py-12">
-      <div className="card p-6">
-        <div className="text-white">{msg}</div>
-        <div className="text-xs text-white/60 mt-2">
-          If this page sits for too long, try reloading or request a new magic link.
-        </div>
+    <div className="min-h-[50vh] flex items-center justify-center">
+      <div className="card p-6 text-center">
+        <h1 className="text-xl font-semibold mb-2">Authenticating</h1>
+        <p className="text-white/70">{message}</p>
       </div>
-    </main>
+    </div>
+  );
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[50vh] flex items-center justify-center">
+          <div className="card p-6 text-center">
+            <h1 className="text-xl font-semibold mb-2">Authenticating</h1>
+            <p className="text-white/70">Preparing…</p>
+          </div>
+        </div>
+      }
+    >
+      <CallbackInner />
+    </Suspense>
   );
 }
