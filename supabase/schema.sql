@@ -1,66 +1,94 @@
--- tenants & users
-create table tenants (
+-- tenants/entities
+create schema if not exists portal;
+
+create table if not exists portal.orgs (
   id uuid primary key default gen_random_uuid(),
-  name text not null
+  name text not null,
+  domain text,
+  created_at timestamptz default now()
 );
 
-create table app_users (
-  id uuid primary key default auth.uid(),
-  email text not null unique,
-  tenant_id uuid not null references tenants(id),
-  role text not null default 'client_user' check (role in ('admin','ops','client_user'))
+create table if not exists portal.profiles (
+  user_id uuid primary key,
+  org_id uuid references portal.orgs(id) on delete cascade,
+  email text not null,
+  role text not null default 'user', -- user|ops|admin
+  is_active boolean not null default true,
+  created_at timestamptz default now()
 );
 
--- vehicles
-create table vehicles (
+-- vehicles & accessories (for quoting)
+create table if not exists portal.vehicles (
   id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references tenants(id),
-  reg text not null,
-  mm_code text,
-  make text, model text, derivative text,
-  unique(tenant_id, reg)
+  make text not null,
+  model text not null,
+  variant text,
+  fuel text,
+  ev boolean default false,
+  base_price numeric not null
+);
+
+create table if not exists portal.accessories (
+  id uuid primary key default gen_random_uuid(),
+  code text unique,
+  label text not null,
+  price numeric not null
 );
 
 -- quotes
-create table quotes (
+create table if not exists portal.quotes (
   id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references tenants(id),
-  created_by uuid not null references app_users(id),
-  customer_name text,
-  customer_email text,
-  cost_center text,
-  vehicle_reg text,
-  vehicle_mmcode text,
+  org_id uuid references portal.orgs(id) on delete cascade,
+  user_id uuid not null,
+  vehicle_id uuid references portal.vehicles(id),
   term_months int not null,
-  km_total int,
-  residual_pct numeric,
-  apr_pct numeric,
-  monthly_payment numeric,
-  total_cost numeric,
-  status text not null default 'draft'
+  limit_km int not null,
+  accessories uuid[] default '{}',
+  monthly numeric not null,
+  total numeric not null,
+  pdf_path text,
+  created_at timestamptz default now()
 );
 
-create table quote_files (
+-- audits (simple)
+create table if not exists portal.audit_inspections (
   id uuid primary key default gen_random_uuid(),
-  quote_id uuid not null references quotes(id) on delete cascade,
-  kind text not null check (kind in ('generated_pdf','signed_acceptance')),
-  storage_path text not null
+  org_id uuid references portal.orgs(id) on delete cascade,
+  user_id uuid not null,
+  reg text not null,
+  odometer int,
+  condition text,
+  issues text,
+  lat numeric,
+  lng numeric,
+  created_at timestamptz default now()
 );
 
--- audits
-create table vehicle_audits (
+create table if not exists portal.audit_photos (
   id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references tenants(id),
-  vehicle_id uuid not null references vehicles(id),
-  inspected_at timestamptz not null default now(),
-  inspected_by uuid not null references app_users(id),
-  lat double precision, lng double precision,
-  condition_score int check (condition_score between 0 and 100),
-  notes text
+  inspection_id uuid references portal.audit_inspections(id) on delete cascade,
+  path text not null,
+  filename text,
+  created_at timestamptz default now()
 );
 
-create table vehicle_audit_photos (
+-- WCP module
+create table if not exists portal.wcp_assessments (
   id uuid primary key default gen_random_uuid(),
-  audit_id uuid not null references vehicle_audits(id) on delete cascade,
-  storage_path text not null
+  org_id uuid references portal.orgs(id) on delete cascade,
+  vehicle_id uuid references portal.vehicles(id),
+  operator_id uuid not null,
+  signature_url text,
+  created_at timestamptz default now()
+);
+
+create table if not exists portal.wcp_assessment_items (
+  id uuid primary key default gen_random_uuid(),
+  assessment_id uuid references portal.wcp_assessments(id) on delete cascade,
+  category text not null,
+  field text not null,
+  status text not null, -- pass|fail|na
+  notes text,
+  media_path text,
+  created_at timestamptz default now()
 );

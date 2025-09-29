@@ -1,12 +1,25 @@
 // src/app/client/wcp/assessments/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getRouteSupabase } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/supabase/server";
+
+type ChecklistItem = {
+  category: string;
+  field: string;
+  status: "pass" | "fail" | "na";
+  notes?: string;
+  media_url?: string | null;
+};
+
+type PostBody = {
+  vehicle: { id: string };
+  checklist?: ChecklistItem[];
+  signature?: string;
+};
 
 export async function POST(req: NextRequest) {
-  const supabase = getRouteSupabase();
-  const body = await req.json();
+  const supabase = getServerSupabase();
+  const body: PostBody = await req.json();
 
-  // Get the authenticated user from the request
   const {
     data: { user },
     error: userError,
@@ -16,13 +29,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Insert the parent assessment
   const { data, error } = await supabase
     .from("wcp_assessments")
     .insert({
       vehicle_id: body.vehicle.id,
-      operator_id: user.id, // link to authenticated user
-      signature_url: body.signature,
+      operator_id: user.id,
+      signature_url: body.signature ?? null,
     })
     .select("*")
     .single();
@@ -31,17 +43,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  // Insert checklist items if provided
   if (body.checklist?.length) {
-    const items = body.checklist.map((i: any) => ({
-      ...i,
+    const items = body.checklist.map((i) => ({
       assessment_id: data.id,
+      category: i.category,
+      field: i.field,
+      status: i.status,
+      notes: i.notes ?? null,
+      media_url: i.media_url ?? null,
     }));
 
-    const { error: itemsError } = await supabase
-      .from("wcp_assessment_items")
-      .insert(items);
-
+    const { error: itemsError } = await supabase.from("wcp_assessment_items").insert(items);
     if (itemsError) {
       return NextResponse.json({ error: itemsError.message }, { status: 400 });
     }

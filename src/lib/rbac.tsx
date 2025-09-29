@@ -1,33 +1,16 @@
 "use client";
-import React, { createContext, useContext, useState } from "react";
-
-export type Role = "admin" | "ops" | "client_user";
-
-type RBACValue = {
-  role: Role;
-  setRole: (r: Role) => void;
-};
-
-const RBACContext = createContext<RBACValue | undefined>(undefined);
-
-export const RBACProvider: React.FC<{ initialRole?: Role; children: React.ReactNode }> = ({
-  initialRole = "client_user",
-  children,
-}) => {
-  const [role, setRole] = useState<Role>(initialRole);
-  return <RBACContext.Provider value={{ role, setRole }}>{children}</RBACContext.Provider>;
-};
-
-export const useRBAC = () => {
-  const ctx = useContext(RBACContext);
-  if (!ctx) throw new Error("useRBAC must be used within RBACProvider");
-  return ctx;
-};
-
-export const inferRoleFromEmail = (email?: string | null): Role => {
-  if (!email) return "client_user";
-  const domain = email.split("@")[1]?.toLowerCase() || "";
-  if (domain === "afrirent.co.za") return "ops";
-  return "client_user";
-};
-
+import { useEffect, useState } from "react";
+import { supabase } from "./supabase/client";
+type Role="user"|"ops"|"admin";
+export function useRBAC(){
+  const [role,setRole]=useState<Role>("user");
+  useEffect(()=>{
+    (async ()=>{
+      const { data:{user} } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("portal.profiles").select("role").eq("user_id",user.id).maybeSingle();
+      if (data?.role) setRole(data.role as Role);
+    })();
+  },[]);
+  return { role };
+}

@@ -1,258 +1,48 @@
-// src/lib/pdf/auditTemplate.ts
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 
-/** Single finding from a checklist item */
-export type AuditFinding = { label?: string; value?: string };
-
-/** Photo blob used by the PDF renderer */
-export type PhotoBlob = { filename: string; bytes: Uint8Array };
-
-/** Input shape for building the audit PDF */
-export type AuditPdfInput = {
-  id: string;
-  date: string; // ISO acceptable
-  inspector: string;
-  vehicle: { reg: string; vin: string; make: string; model: string };
-  location: string; // already normalized string (e.g., "lat, lng — address")
-  findings: string | AuditFinding[];
-  notes?: string;
-  photos: PhotoBlob[];
-};
-
-/**
- * Build a branded, single/multi-page PDF for a vehicle audit.
- * Returns a Uint8Array of the finished PDF bytes.
- */
 export async function buildAuditPdf(
-  input: AuditPdfInput,
-  logoBytes?: Uint8Array
-): Promise<Uint8Array> {
+  data: {
+    id:string; date:string; inspector:string;
+    vehicle:{ reg:string; vin?:string; make?:string; model?:string };
+    location:string; findings:string; notes:string;
+    photos: { filename:string; bytes:Uint8Array }[];
+  },
+  logoBytes: Uint8Array
+){
   const pdf = await PDFDocument.create();
-
-  // A4 portrait in points
-  const pageSize: [number, number] = [595.28, 841.89];
-
-  // Fonts
+  const pageSize:[number,number]=[595.28,841.89];
+  let page = pdf.addPage(pageSize);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
-  const heading = rgb(0.925, 0.392, 0.145); // Afrirent orange vibe
-  const text = rgb(1, 1, 1);
-  const muted = rgb(0.8, 0.8, 0.8);
+  // header
+  if (logoBytes.length){
+    try { const img = await pdf.embedPng(logoBytes).catch(async()=>await pdf.embedJpg(logoBytes)); page.drawImage(img,{x:40,y:780,width:80,height:80}); } catch {}
+  }
+  page.drawText("Vehicle Audit Report",{ x:140, y:820, size:18, font });
 
-  // Try embed logo if provided
-  let logo: { width: number; height: number; scale: (n: number) => { width: number; height: number } } | null = null;
-  if (logoBytes && logoBytes.length > 0) {
-    try {
-      // pdf-lib auto-detects via separate calls
-      try {
-        logo = await pdf.embedPng(logoBytes);
-      } catch {
-        logo = await pdf.embedJpg(logoBytes);
-      }
-    } catch {
-      logo = null;
-    }
+  let y=760;
+  const ln=(t:string)=>{ page.drawText(t,{ x:40, y, size:12, font }); y-=16; };
+  ln(`Audit ID: ${data.id}`);
+  ln(`Date: ${new Date(data.date).toLocaleString()}`);
+  ln(`Inspector: ${data.inspector}`);
+  ln(`Vehicle: ${data.vehicle.reg} ${data.vehicle.make||""} ${data.vehicle.model||""}`);
+  ln(`Location: ${data.location}`);
+  y-=10; ln("Findings:"); for (const l of wrap(data.findings, 88)){ ln("  "+l); }
+  y-=10; ln("Notes:"); for (const l of wrap(data.notes||"-", 88)){ ln("  "+l); }
+
+  y-=10; ln("Photos:");
+  const left=40, maxW=515; let x=left, rowH=0;
+  for (const p of data.photos){
+    const img = await pdf.embedPng(p.bytes).catch(async()=>await pdf.embedJpg(p.bytes));
+    const scale = 120 / Math.max(img.width, img.height);
+    const w = img.width*scale, h=img.height*scale;
+    if (x + w > maxW){ x=left; y -= (rowH + 18); rowH=0; }
+    if (y - h < 60){ page = pdf.addPage(pageSize); y=780; x=left; rowH=0; }
+    page.drawImage(img,{ x, y: y-h, width: w, height: h });
+    page.drawText(p.filename,{ x, y: y-h-12, size:9, font });
+    x += w + 12; rowH = Math.max(rowH, h);
   }
 
-  const wrap = (str: string, max = 88) => {
-    const out: string[] = [];
-    const words = (str || "").split(/\s+/);
-    let line = "";
-    for (const w of words) {
-      const tryLine = line ? `${line} ${w}` : w;
-      if (tryLine.length > max) {
-        if (line) out.push(line);
-        line = w;
-      } else {
-        line = tryLine;
-      }
-    }
-    if (line) out.push(line);
-    return out;
-  };
-
-  const newPage = () => pdf.addPage(pageSize);
-
-  const drawHeader = (pg: any) => {
-    const sz = pg.getSize();
-    const w = sz.width;
-    const h = sz.height;
-
-    // banner
-    pg.drawRectangle({
-      x: 0,
-      y: h - 64,
-      width: w,
-      height: 64,
-      color: heading,
-    });
-
-    // title
-    pg.drawText("Afrirent — Vehicle Audit Report", {
-      x: 40,
-      y: h - 42,
-      size: 16,
-      font: bold,
-      color: rgb(0, 0, 0),
-    });
-
-    // logo (top-right)
-    if (logo) {
-      const scaled = logo.scale(0.25);
-      pg.drawImage(logo, {
-        x: w - scaled.width - 28,
-        y: h - scaled.height - 20,
-        width: scaled.width,
-        height: scaled.height,
-      });
-    }
-  };
-
-  // normalize findings to a single multi-line string
-  const findingsText =
-    typeof input.findings === "string"
-      ? input.findings || "No findings."
-      : (input.findings || [])
-          .map((f) => {
-            const label = (f?.label ?? "").toString().trim();
-            const value = (f?.value ?? "").toString().trim();
-            return label ? `${label}: ${value}` : value;
-          })
-          .filter((l) => l.length > 0)
-          .join("\n") || "No findings.";
-
-  // Render first page
-  let page = newPage();
-  drawHeader(page);
-  let y = page.getSize().height - 90;
-  const left = 40;
-
-  // Meta block
-  const meta = [
-    ["Audit ID", input.id],
-    ["Date", new Date(input.date).toLocaleString()],
-    ["Inspector", input.inspector || "N/A"],
-    ["Location", input.location || "N/A"],
-  ];
-
-  for (const [k, v] of meta) {
-    page.drawText(`${k}:`, { x: left, y, size: 11, font: bold, color: text });
-    page.drawText(String(v ?? ""), { x: left + 110, y, size: 11, font, color: text });
-    y -= 16;
-  }
-
-  y -= 8;
-
-  // Vehicle block
-  page.drawText("Vehicle", { x: left, y, size: 12, font: bold, color: text });
-  y -= 16;
-
-  const vehLines = [
-    ["Registration", input.vehicle.reg || ""],
-    ["VIN", input.vehicle.vin || ""],
-    ["Make", input.vehicle.make || ""],
-    ["Model", input.vehicle.model || ""],
-  ];
-  for (const [k, v] of vehLines) {
-    page.drawText(`${k}:`, { x: left, y, size: 11, font: bold, color: text });
-    page.drawText(String(v ?? ""), { x: left + 110, y, size: 11, font, color: text });
-    y -= 16;
-  }
-
-  y -= 10;
-
-  // Findings
-  page.drawText("Findings", { x: left, y, size: 12, font: bold, color: text });
-  y -= 16;
-
-  for (const line of wrap(findingsText, 95)) {
-    if (y < 80) {
-      page = newPage();
-      drawHeader(page);
-      y = page.getSize().height - 80;
-    }
-    page.drawText(line, { x: left, y, size: 10.5, font, color: text });
-    y -= 14;
-  }
-
-  y -= 10;
-
-  // Notes
-  if (input.notes && input.notes.trim().length) {
-    page.drawText("Notes", { x: left, y, size: 12, font: bold, color: text });
-    y -= 16;
-    for (const line of wrap(input.notes, 95)) {
-      if (y < 80) {
-        page = newPage();
-        drawHeader(page);
-        y = page.getSize().height - 80;
-      }
-      page.drawText(line, { x: left, y, size: 10.5, font, color: text });
-      y -= 14;
-    }
-  }
-
-  // Photos grid
-  if (input.photos && input.photos.length) {
-    if (y < 160) {
-      page = newPage();
-      drawHeader(page);
-      y = page.getSize().height - 80;
-    }
-    page.drawText("Photos", { x: left, y, size: 12, font: bold, color: text });
-    y -= 18;
-
-    const maxW = page.getSize().width - left * 2;
-    const cellW = 160;
-    const cellH = 110;
-    const gap = 14;
-
-    let x = left;
-    let rowH = 0;
-
-    for (const p of input.photos) {
-      // embed image (try png then jpg)
-      let img: any = null;
-      try {
-        img = await pdf.embedPng(p.bytes);
-      } catch {
-        try {
-          img = await pdf.embedJpg(p.bytes);
-        } catch {
-          img = null;
-        }
-      }
-      if (!img) continue;
-
-      const scale = Math.min(cellW / img.width, cellH / img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
-
-      if (x + w > left + maxW) {
-        // new row
-        x = left;
-        y -= (rowH + 20);
-        rowH = 0;
-      }
-
-      if (y - h < 80) {
-        // new page
-        page = newPage();
-        drawHeader(page);
-        y = page.getSize().height - 80;
-        x = left;
-        rowH = 0;
-      }
-
-      page.drawImage(img, { x, y: y - h, width: w, height: h });
-      page.drawText(p.filename, { x, y: y - h - 12, size: 9, font, color: muted });
-
-      x += w + gap;
-      rowH = Math.max(rowH, h + 12);
-    }
-  }
-
-  const bytes = await pdf.save();
-  return bytes;
+  return await pdf.save();
 }
+function wrap(s:string, n:number){ const w:string[]=[]; let cur=""; for (const word of s.split(/\s+/)){ if ((cur+" "+word).trim().length>n){ w.push(cur.trim()); cur=word; } else { cur += " "+word; } } if (cur.trim()) w.push(cur.trim()); return w; }

@@ -1,93 +1,62 @@
+// src/app/client/dashboard/page.tsx
 "use client";
-export const dynamic = "force-dynamic";
 
-import NextDynamic from "next/dynamic";
+import KpiCard from "@/components/KpiCard";
+import Sparkline from "@/components/Sparkline";
+import DataTable from "@/components/DataTable";
 
-// keep these if the files exist
-const KpiCard = NextDynamic(() => import("@/components/KpiCard"), { ssr: false });
-const AvailabilityChart = NextDynamic(() => import("@/components/charts/AvailabilityChart"), { ssr: false });
-const DowntimeByCategory = NextDynamic(() => import("@/components/charts/DowntimeByCategory"), { ssr: false });
-
-/**
- * Inline DataTable to avoid missing '@/components/DataTable'.
- * If you later add a reusable component, you can swap this back to a dynamic import.
- */
-type Row = {
+type SnapshotRow = {
+  id: string;
   reg: string;
   entity: string;
   status: string;
-  avail: string;
-  downtime: string;
-  util: string;
+  availability: string;
+  downtimeHrs: number;
+  utilisationKm: number;
 };
-
-function InlineDataTable({ rows }: { rows: Row[] }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="text-white/70 border-b border-white/10">
-          <tr>
-            <th className="text-left p-2">Reg</th>
-            <th className="text-left p-2">Entity</th>
-            <th className="text-left p-2">Status</th>
-            <th className="text-left p-2">Availability</th>
-            <th className="text-left p-2">Downtime</th>
-            <th className="text-left p-2">Utilisation</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.reg} className="border-b border-white/5">
-              <td className="p-2">{r.reg}</td>
-              <td className="p-2">{r.entity}</td>
-              <td className="p-2">{r.status}</td>
-              <td className="p-2">{r.avail}</td>
-              <td className="p-2">{r.downtime}</td>
-              <td className="p-2">{r.util}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   const kpis = [
     { label: "Fleet Availability", value: "94.2%", sub: "Target ≥ 95%" },
     { label: "Utilisation (km/veh/mo)", value: "1,284", sub: "Last 30 days" },
     { label: "Downtime (hrs)", value: "312", sub: "Month to date" },
-    { label: "Rebills Outstanding", value: "R 428,000", sub: "Awaiting client" }
+    { label: "Rebills Outstanding", value: "R 428,000", sub: "Awaiting client" },
   ];
 
-  const rows: Row[] = [
-    { reg: "FZC504L", entity: "COJ",       status: "In Service", avail: "88.0%", downtime: "44h",  util: "1,122" },
-    { reg: "JDK901GP", entity: "SANParks",  status: "Workshop",   avail: "72.5%", downtime: "128h", util: "698" },
-    { reg: "HLR222EC", entity: "Mangaung",  status: "In Service", avail: "97.3%", downtime: "11h",  util: "1,876" }
+  const spark = [81, 83, 80, 84, 85, 86, 82, 88, 90, 91, 93, 92, 94, 95];
+
+  const rows: SnapshotRow[] = [
+    { id: "1", reg: "FZC504L", entity: "COJ", status: "In Service", availability: "88.0%", downtimeHrs: 44, utilisationKm: 1122 },
+    { id: "2", reg: "JDK901GP", entity: "SANParks", status: "Workshop", availability: "72.5%", downtimeHrs: 128, utilisationKm: 698 },
+    { id: "3", reg: "HLR222EC", entity: "Mangaung", status: "In Service", availability: "97.3%", downtimeHrs: 11, utilisationKm: 1876 },
   ];
 
   return (
-    <main>
-      <div className="grid md:grid-cols-4 gap-5">
-        {kpis.map((k, i) => (
-          <KpiCard key={i} label={k.label} value={k.value} sub={k.sub} />
+    <main className="space-y-6">
+      <div className="grid md:grid-cols-4 gap-4">
+        {kpis.map((k) => (
+          <KpiCard key={k.label} label={k.label} value={k.value} sub={k.sub} />
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mt-6">
-        <div className="card p-6 watermark">
-          <h3 className="section-title">Availability (30 days)</h3>
-          <AvailabilityChart />
-        </div>
-        <div className="card p-6 watermark">
-          <h3 className="section-title">Downtime by Category</h3>
-          <DowntimeByCategory />
-        </div>
+      <div className="card p-6">
+        <h3 className="section-title">Availability (sparkline)</h3>
+        <Sparkline points={spark} />
       </div>
 
-      <div className="card p-6 mt-6 watermark">
+      <div className="card p-6">
         <h3 className="section-title">Fleet Snapshot</h3>
-        <InlineDataTable rows={rows} />
+        <DataTable<SnapshotRow>
+          rows={rows}
+          columns={[
+            { key: "reg", header: "Reg" },
+            { key: "entity", header: "Entity" },
+            { key: "status", header: "Status" },
+            { key: "availability", header: "Availability", align: "right" },
+            { key: "downtimeHrs", header: "Downtime (h)", align: "right" },
+            { key: "utilisationKm", header: "Util (km)", align: "right" },
+          ]}
+        />
       </div>
     </main>
   );

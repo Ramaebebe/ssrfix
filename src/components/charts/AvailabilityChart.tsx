@@ -1,11 +1,12 @@
 "use client";
-import { FC } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-const data=[{name:"Week 1",value:92},{name:"Week 2",value:94},{name:"Week 3",value:93},{name:"Week 4",value:95}];
-const AvailabilityChart: FC = () => (
-  <ResponsiveContainer width="100%" height={300}>
-    <LineChart data={data}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="name"/><YAxis domain={[0,100]}/><Tooltip/><Line type="monotone" dataKey="value" stroke="#EC6425" strokeWidth={2} dot={false}/></LineChart>
-  </ResponsiveContainer>
-);
-export default AvailabilityChart;
-
+import { LineChart, Line, ResponsiveContainer } from "recharts";
+export default function AvailabilityChart(){
+  const data = Array.from({length:30},(_,i)=>({d:i,v:90+Math.random()*10}));
+  return (
+    <div className="h-56">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}><Line type="monotone" dataKey="v" stroke="#EC6425" strokeWidth={2} dot={false}/></LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}

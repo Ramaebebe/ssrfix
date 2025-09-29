@@ -1,3 +1,3 @@
-import { redirect } from "next/navigation";
-export default function ClientRoot(){ redirect("/client/dashboard"); }
-
+export default function ClientIndex() {
+  return <div className="card p-6">Welcome. Use the sidebar.</div>;
+}

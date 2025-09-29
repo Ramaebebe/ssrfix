@@ -1,25 +1,9 @@
-"use client";
-import React from "react";
-
-/**
- * Generic analytics embed via <iframe>.
- * Use with Metabase/Superset/Redash/Looker Studio share links.
- */
-export default function EmbedFrame({
-  title,
-  src,
-  height = 560
-}: { title: string; src: string; height?: number }) {
+export default function EmbedFrame({ src, title }:{src:string; title:string}){
+  if (!src) return <div className="card p-6">No analytics URL configured.</div>;
   return (
     <div className="card p-0 overflow-hidden">
-      <div className="px-4 py-2 border-b border-white/10 text-white/80 text-sm">{title}</div>
-      <iframe
-        src={src}
-        style={{ width: "100%", height }}
-        allow="fullscreen"
-        loading="lazy"
-        className="bg-white"
-      />
+      <div className="px-4 py-2 text-sm opacity-70">{title}</div>
+      <iframe src={src} className="w-full h-[360px]" />
     </div>
   );
 }

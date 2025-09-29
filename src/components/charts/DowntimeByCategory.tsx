@@ -1,14 +1,12 @@
 "use client";
-import { FC } from "react";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-const data=[{name:"Maintenance",value:120},{name:"Accidents",value:80},{name:"Tyres",value:60},{name:"Other",value:52}];
-const COLORS=["#EC6425","#C7511E","#A13F18","#7B2D12"];
-const DowntimeByCategory: FC = () => (
-  <ResponsiveContainer width="100%" height={300}>
-    <PieChart><Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-      {data.map((_, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
-    </Pie><Tooltip/></PieChart>
-  </ResponsiveContainer>
-);
-export default DowntimeByCategory;
-
+import { LineChart, Line, ResponsiveContainer } from "recharts";
+export default function DowntimeByCategory(){
+  const data = ["Tyres","Body","Service","Fuel"].map((k,i)=>({i,v: Math.random()*100+20}));
+  return (
+    <div className="h-56">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}><Line type="monotone" dataKey="v" stroke="#EC6425" strokeWidth={2} dot/></LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}

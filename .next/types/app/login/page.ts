@@ -1,4 +1,4 @@
-// File: C:\Users\TebohoRamaebebe\OneDrive - Afrirent PTY Ltd\Documents\GitHub\portal2509-ssrfix2\src\app\login\page.tsx
+// File: C:\Dev\afriportal\src\app\login\page.tsx
 import * as entry from '../../../../src/app/login/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

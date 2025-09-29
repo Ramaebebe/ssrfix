@@ -1,14 +1,11 @@
-// src/app/client/reports/page.tsx
 "use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ResponsiveContainer, LineChart, Line } from "recharts";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { supabase } from "@/lib/supabase/client";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -35,15 +32,7 @@ type Txn = {
 };
 
 const DEFAULT_SECTIONS = [
-  "Availability",
-  "Utilisation",
-  "Downtime",
-  "Maintenance",
-  "Tyres",
-  "Fuel",
-  "Finance",
-  "Risk",
-  "Other",
+  "Availability","Utilisation","Downtime","Maintenance","Tyres","Fuel","Finance","Risk","Other"
 ];
 
 const seededTiles = (): Tile[] => {
@@ -90,86 +79,27 @@ export default function ReportsPage() {
   const [tiles, setTiles] = useState<Tile[]>(seededTiles());
   const [txns, setTxns] = useState<Txn[]>(seededTxns(tiles));
 
-  const loadFromSupabase = async () => {
-    setLoading(true);
-    try {
-      // Tiles
-      const { data: t } = await supabase.from("report_tiles").select("*");
-      if (t && t.length) {
-        const parsed = t.map((r: any): Tile => {
-          let sparkNums: number[] | undefined = undefined;
-          if (Array.isArray(r.spark)) {
-            sparkNums = (r.spark as number[])
-              .map((x: number) => Number(x))
-              .filter((x: number) => !Number.isNaN(x));
-          } else if (typeof r.spark === "string") {
-            const parts: string[] = (r.spark as string).split(",");
-            const mapped: number[] = parts.map((s: string) => Number(s.trim()));
-            sparkNums = mapped.filter((x: number) => !Number.isNaN(x));
-          }
-          return {
-            section: String(r.section),
-            title: String(r.title),
-            value: Number(r.value ?? 0),
-            unit: r.unit ?? undefined,
-            delta: r.delta != null ? Number(r.delta) : undefined,
-            spark: sparkNums,
-          };
-        });
-        setTiles(parsed);
-      }
-
-      // Transactions
-      const { data: d } = await supabase
-        .from("report_transactions")
-        .select("*")
-        .order("ts", { ascending: false })
-        .limit(2000);
-
-      if (d && d.length) {
-        const parsed = d.map(
-          (r: any): Txn => ({
-            section: r.section,
-            title: r.title,
-            ts: r.ts,
-            ref: r.ref ?? undefined,
-            description: r.description ?? undefined,
-            amount: r.amount != null ? Number(r.amount) : undefined,
-            entity: r.entity ?? undefined,
-          })
-        );
-        setTxns(parsed);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadFromSupabase();
-  }, []);
-
   const onImportExcel = async (file: File) => {
     const XLSX = await import("xlsx");
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: "array" });
 
     const wsReports = wb.Sheets["Reports"] || wb.Sheets[wb.SheetNames[0]];
-    const rows: any[] = XLSX.utils.sheet_to_json(wsReports, { defval: "" });
+    const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(wsReports, { defval: "" });
 
-    const parsedTiles: Tile[] = rows.map((r: any): Tile => {
-      let sparkNums: number[] | undefined = undefined;
-      if (typeof r.spark === "string") {
-        const parts: string[] = (r.spark as string).split(",");
-        const mapped: number[] = parts.map((s: string) => Number(s.trim()));
-        sparkNums = mapped.filter((x: number) => !Number.isNaN(x));
+    const parsedTiles: Tile[] = rows.map((r) => {
+      const sparkRaw = r["spark"];
+      let sparkNums: number[] | undefined;
+      if (Array.isArray(sparkRaw)) sparkNums = (sparkRaw as number[]).map(Number).filter(x => !Number.isNaN(x));
+      else if (typeof sparkRaw === "string") {
+        sparkNums = (sparkRaw as string).split(",").map(s => Number(s.trim())).filter(x => !Number.isNaN(x));
       }
       return {
-        section: String(r.section || r.Section || "Other"),
-        title: String(r.title || r.Title || "Untitled"),
-        value: Number(r.value || r.Value || 0),
-        unit: String(r.unit || r.Unit || ""),
-        delta: r.delta !== "" ? Number(r.delta) : undefined,
+        section: String(r["section"] ?? "Other"),
+        title: String(r["title"] ?? "Untitled"),
+        value: Number(r["value"] ?? 0),
+        unit: String(r["unit"] ?? ""),
+        delta: r["delta"] !== "" && r["delta"] != null ? Number(r["delta"]) : undefined,
         spark: sparkNums,
       };
     });
@@ -177,29 +107,16 @@ export default function ReportsPage() {
     const wsTx = wb.Sheets["Transactions"];
     let parsedTx: Txn[] = [];
     if (wsTx) {
-      const txRows: any[] = XLSX.utils.sheet_to_json(wsTx, { defval: "" });
-      parsedTx = txRows.map((r: any): Txn => ({
-        section: String(r.section || r.Section || "Other"),
-        title: String(r.title || r.Title || "Untitled"),
-        ts: r.ts ? new Date(r.ts).toISOString() : new Date().toISOString(),
-        ref: String(r.ref || r.Ref || ""),
-        description: String(r.description || r.Description || ""),
-        amount: r.amount !== "" ? Number(r.amount) : undefined,
-        entity: String(r.entity || r.Entity || ""),
+      const txRows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(wsTx, { defval: "" });
+      parsedTx = txRows.map((r) => ({
+        section: String(r["section"] ?? "Other"),
+        title: String(r["title"] ?? "Untitled"),
+        ts: r["ts"] ? new Date(String(r["ts"])).toISOString() : new Date().toISOString(),
+        ref: String(r["ref"] ?? ""),
+        description: String(r["description"] ?? ""),
+        amount: r["amount"] !== "" && r["amount"] != null ? Number(r["amount"]) : undefined,
+        entity: String(r["entity"] ?? ""),
       }));
-    }
-
-    try {
-      if (parsedTiles.length) {
-        await supabase
-          .from("report_tiles")
-          .upsert(parsedTiles.map((t) => ({ ...t, spark: t.spark ?? [] })));
-      }
-      if (parsedTx.length) {
-        await supabase.from("report_transactions").upsert(parsedTx);
-      }
-    } catch (e) {
-      console.warn("Supabase upsert error:", e);
     }
 
     if (parsedTiles.length) setTiles(parsedTiles);
@@ -207,8 +124,7 @@ export default function ReportsPage() {
   };
 
   const onExportPDF = async () => {
-    const node = pdfRef.current;
-    if (!node) return;
+    const node = pdfRef.current; if (!node) return;
     const canvas = await html2canvas(node, { scale: 2 });
     const img = canvas.toDataURL("image/png");
     const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: "a4" });
@@ -216,31 +132,6 @@ export default function ReportsPage() {
     const h = pdf.internal.pageSize.getHeight();
     pdf.addImage(img, "PNG", 0, 0, w, h);
     pdf.save("Afrirent_Reports.pdf");
-  };
-
-  const onExportExcel = async () => {
-    const XLSX = await import("xlsx");
-    const reports = tiles.map((t) => ({
-      section: t.section,
-      title: t.title,
-      value: t.value,
-      unit: t.unit ?? "",
-      delta: t.delta ?? "",
-      spark: (t.spark ?? []).join(","),
-    }));
-    const tx = txns.map((r) => ({
-      section: r.section,
-      title: r.title,
-      ts: r.ts,
-      ref: r.ref ?? "",
-      description: r.description ?? "",
-      amount: r.amount ?? "",
-      entity: r.entity ?? "",
-    }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reports), "Reports");
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tx), "Transactions");
-    XLSX.writeFile(wb, "Afrirent_Reports.xlsx");
   };
 
   const grouped = useMemo(() => {
@@ -256,33 +147,11 @@ export default function ReportsPage() {
     return ordered;
   }, [tiles]);
 
-  const txByKey = useMemo(() => {
-    const m = new Map<string, Txn[]>();
-    for (const r of txns) {
-      const key = `${r.section}|||${r.title}`;
-      if (!m.has(key)) m.set(key, []);
-      m.get(key)!.push(r);
-    }
-    for (const [k, arr] of m) {
-      arr.sort((a, b) => (a.ts > b.ts ? -1 : 1));
-      m.set(k, arr);
-    }
-    return m;
-  }, [txns]);
-
-  const columns: ColDef<Txn>[] = [
-    {
-      headerName: "Date",
-      field: "ts",
-      valueFormatter: (p) => (p.value ? new Date(p.value as string).toLocaleDateString() : ""),
-    },
+  const columns = [
+    { headerName: "Date", field: "ts", valueFormatter: (p: { value: string }) => new Date(p.value).toLocaleDateString() },
     { headerName: "Ref", field: "ref" },
     { headerName: "Description", field: "description", flex: 1 },
-    {
-      headerName: "Amount",
-      field: "amount",
-      valueFormatter: (p) => (p.value != null ? `R ${Number(p.value).toLocaleString()}` : ""),
-    },
+    { headerName: "Amount", field: "amount", valueFormatter: (p: { value: number }) => (p.value != null ? `R ${Number(p.value).toLocaleString()}` : "") },
     { headerName: "Entity", field: "entity" },
   ];
 
@@ -292,66 +161,45 @@ export default function ReportsPage() {
         <h1 className="text-2xl font-semibold mr-auto">Reports</h1>
         <label className="btn cursor-pointer">
           Import Excel/CSV
-          <input
-            type="file"
-            className="hidden"
-            accept=".xlsx,.xls,.csv"
-            onChange={(e) => e.target.files && onImportExcel(e.target.files[0])}
-          />
+          <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={(e)=> e.target.files && onImportExcel(e.target.files[0])} />
         </label>
-        <button className="btn" onClick={onExportExcel}>
-          Export Excel
-        </button>
-        <button className="btn" onClick={onExportPDF}>
-          Export PDF
-        </button>
-        <button className="navlink" onClick={loadFromSupabase} disabled={loading}>
-          {loading ? "Refreshing…" : "Refresh"}
-        </button>
+        <button className="btn" onClick={onExportPDF}>Export PDF</button>
       </div>
 
       <div ref={pdfRef} className="space-y-8">
         {grouped.map(([section, items]) => (
           <section key={section}>
             <div className="flex items-center gap-3 mb-3">
-              <img src="/brand/report_icon.png" className="h-6 opacity-80" alt="" />
               <h2 className="text-xl font-semibold">{section}</h2>
               <div className="h-px flex-1 bg-white/10"></div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {items.slice(0, 3).map((tile, i) => {
-                const key = `${tile.section}|||${tile.title}`;
-                const rows = (txByKey.get(key) ?? []).slice(0, 20);
-                return (
-                  <div key={i} className="card p-5 watermark">
-                    <div className="flex items-baseline justify-between mb-2">
-                      <div className="text-sm text-white/70">{tile.title}</div>
-                      {tile.delta !== undefined && (
-                        <div className={tile.delta >= 0 ? "text-green-400 text-xs" : "text-red-400 text-xs"}>
-                          {tile.delta >= 0 ? "+" : ""}
-                          {tile.delta}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-2xl font-bold mb-2">
-                      {tile.unit === "R" ? "R " : ""}
-                      {tile.value.toLocaleString()}
-                      {tile.unit && tile.unit !== "R" ? ` ${tile.unit}` : ""}
-                    </div>
-                    <div className="h-24 mb-3">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={(tile.spark ?? []).map((v, idx) => ({ i: idx, v }))}>
-                          <Line type="monotone" dataKey="v" stroke="#EC6425" strokeWidth={2} dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="ag-theme-alpine" style={{ height: 260 }}>
-                      <AgGridReact<Txn> rowData={rows} columnDefs={columns} headerHeight={28} rowHeight={28} />
-                    </div>
+              {items.slice(0, 3).map((tile, i) => (
+                <div key={i} className="card p-5 watermark">
+                  <div className="flex items-baseline justify-between mb-2">
+                    <div className="text-sm text-white/70">{tile.title}</div>
+                    {tile.delta !== undefined && (
+                      <div className={tile.delta >= 0 ? "text-green-400 text-xs" : "text-red-400 text-xs"}>
+                        {tile.delta >= 0 ? "+" : ""}{tile.delta}
+                      </div>
+                    )}
                   </div>
-                );
-              })}
+                  <div className="text-2xl font-bold mb-2">
+                    {tile.unit === "R" ? "R " : ""}{tile.value.toLocaleString()}{tile.unit && tile.unit !== "R" ? ` ${tile.unit}` : ""}
+                  </div>
+                  <div className="h-24 mb-3">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={(tile.spark ?? []).map((v: number, idx: number) => ({ i: idx, v }))}>
+                        <Line type="monotone" dataKey="v" stroke="#EC6425" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="ag-theme-alpine" style={{ height: 260 }}>
+                    <AgGridReact rowData={[]} columnDefs={columns as unknown as any[]} headerHeight={28} rowHeight={28} />
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         ))}

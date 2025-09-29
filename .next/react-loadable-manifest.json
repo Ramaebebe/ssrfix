@@ -1,89 +1,24 @@
 {
   "..\\node_modules\\@supabase\\auth-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch": {
-    "id": 80485,
+    "id": "..\\node_modules\\@supabase\\auth-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch",
     "files": []
   },
   "..\\node_modules\\@supabase\\functions-js\\dist\\module\\helper.js -> @supabase/node-fetch": {
-    "id": 80485,
+    "id": "..\\node_modules\\@supabase\\functions-js\\dist\\module\\helper.js -> @supabase/node-fetch",
     "files": []
   },
   "..\\node_modules\\@supabase\\realtime-js\\dist\\module\\RealtimeClient.js -> @supabase/node-fetch": {
-    "id": 80485,
+    "id": "..\\node_modules\\@supabase\\realtime-js\\dist\\module\\RealtimeClient.js -> @supabase/node-fetch",
     "files": []
+  },
+  "..\\node_modules\\@supabase\\realtime-js\\dist\\module\\RealtimeClient.js -> ws": {
+    "id": "..\\node_modules\\@supabase\\realtime-js\\dist\\module\\RealtimeClient.js -> ws",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_ws_browser_js.js"
+    ]
   },
   "..\\node_modules\\@supabase\\storage-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch": {
-    "id": 80485,
+    "id": "..\\node_modules\\@supabase\\storage-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch",
     "files": []
-  },
-  "..\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> canvg": {
-    "id": 12396,
-    "files": [
-      "static/chunks/bc98253f.5b0f4fe717c5b99c.js",
-      "static/chunks/3969.5b77e8776c4ce73c.js"
-    ]
-  },
-  "..\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> dompurify": {
-    "id": 11411,
-    "files": [
-      "static/chunks/1411.586c80a744a2e4bd.js"
-    ]
-  },
-  "..\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> html2canvas": {
-    "id": 24457,
-    "files": [
-      "static/chunks/ad2866b8-d9a081783e4ea5b3.js"
-    ]
-  },
-  "app\\client\\audits\\page.tsx -> html2canvas": {
-    "id": 24457,
-    "files": [
-      "static/chunks/ad2866b8-d9a081783e4ea5b3.js"
-    ]
-  },
-  "app\\client\\audits\\page.tsx -> jspdf": {
-    "id": 53375,
-    "files": [
-      "static/chunks/164f4fb6-ba0a49513894a55b.js",
-      "static/chunks/3553-abf9d2f29649e966.js"
-    ]
-  },
-  "app\\client\\dashboard\\page.tsx -> @/components/DataTable": {
-    "id": 59869,
-    "files": [
-      "static/css/0efb0e2edc93b402.css",
-      "static/css/e39cb851c1b7befd.css",
-      "static/chunks/32ea55aa-4ae67f0e64c8b242.js",
-      "static/chunks/4666-efed1a1f7c681c07.js",
-      "static/chunks/9869.2676996c85f3f65a.js"
-    ]
-  },
-  "app\\client\\dashboard\\page.tsx -> @/components/KpiCard": {
-    "id": 28176,
-    "files": [
-      "static/chunks/8176.62c88be3994e1025.js"
-    ]
-  },
-  "app\\client\\dashboard\\page.tsx -> @/components/charts/AvailabilityChart": {
-    "id": 57524,
-    "files": [
-      "static/chunks/1546-2e9eecb085cfc812.js",
-      "static/chunks/1156-565be28da227c836.js",
-      "static/chunks/7524.ad8e63faa12af868.js"
-    ]
-  },
-  "app\\client\\dashboard\\page.tsx -> @/components/charts/DowntimeByCategory": {
-    "id": 90398,
-    "files": [
-      "static/chunks/1546-2e9eecb085cfc812.js",
-      "static/chunks/5169.5941ad06930130f8.js",
-      "static/chunks/398.eac0e5f1f7094c05.js"
-    ]
-  },
-  "app\\client\\reports\\page.tsx -> xlsx": {
-    "id": 2093,
-    "files": [
-      "static/chunks/2170a4aa.a3bb4593edc03eaf.js",
-      "static/chunks/6919.aa06879c0773525b.js"
-    ]
   }
 }

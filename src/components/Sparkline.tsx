@@ -1,15 +1,14 @@
-"use client";
-import { LineChart, Line, ResponsiveContainer } from "recharts";
+export default function Sparkline({ points }: { points: number[] }) {
+  if (!points.length) return null;
+  const w = 300, h = 60;
+  const max = Math.max(...points), min = Math.min(...points);
+  const norm = (v: number) => max === min ? h / 2 : h - ((v - min) / (max - min)) * h;
+  const step = w / (points.length - 1 || 1);
+  const d = points.map((v, i) => `${i === 0 ? "M" : "L"} ${i * step} ${norm(v)}`).join(" ");
 
-export default function Sparkline({ series }: { series: number[] }) {
-  const data = series.map((v, i) => ({ i, v }));
   return (
-    <div className="h-24">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <Line type="monotone" dataKey="v" stroke="#EC6425" strokeWidth={2} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-16">
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="2" />
+    </svg>
   );
 }

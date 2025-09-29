@@ -1,34 +1,12 @@
 {
   "root": true,
-  "env": { "browser": true, "node": true, "es2022": true },
   "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaVersion": 2022,
-    "sourceType": "module",
-    "ecmaFeatures": { "jsx": true },
-    "project": null
-  },
-  "plugins": ["@typescript-eslint", "react", "react-hooks", "next"],
+  "plugins": ["@typescript-eslint"],
   "extends": [
     "next/core-web-vitals",
     "plugin:@typescript-eslint/recommended"
   ],
-  "settings": {
-    "react": { "version": "detect" }
-  },
-  "overrides": [
-    {
-      "files": ["**/*.ts", "**/*.tsx"],
-      "rules": {
-        "@typescript-eslint/no-unused-vars": [
-          "warn",
-          { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }
-        ]
-      }
-    },
-    {
-      "files": ["next.config.js", "postcss.config.js", "tailwind.config.js", "eslint.config.js"],
-      "parserOptions": { "sourceType": "script" }
-    }
-  ]
+  "rules": {
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
+  }
 }
