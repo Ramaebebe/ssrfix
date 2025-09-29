@@ -1,15 +1,18 @@
 {
   "name": "afriportal",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "private": true,
+  "engines": {
+    "node": ">=20 <21"
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "node -e \"console.log('> preflight')\" && powershell -NoProfile -ExecutionPolicy Bypass -File .\\preflight.ps1 && next build",
+    "build": "node scripts/preflight.cjs && next build",
     "start": "next start",
-    "lint": "next lint"
-  },
-  "engines": {
-    "node": ">=18.18.0 <21"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "preflight:local": "powershell -NoProfile -ExecutionPolicy Bypass -File ./preflight.ps1"
+
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "0.10.0",
