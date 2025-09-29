@@ -12,7 +12,6 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "preflight:local": "powershell -NoProfile -ExecutionPolicy Bypass -File ./preflight.ps1"
-
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "0.10.0",
@@ -26,6 +25,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "recharts": "2.13.0",
+    "xlsx": "^0.18.5",
     "zod": "3.23.8"
   },
   "devDependencies": {
