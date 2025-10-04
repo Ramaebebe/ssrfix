@@ -38,7 +38,7 @@ function CallbackInner() {
         if (!alive) return;
         setMessage("Signed in. Redirectingâ€¦");
         router.replace(redirectTo);
-      } catch (e) {
+      } catch (_e) {
         if (!alive) return;
         setMessage("Unexpected error during sign-in.");
         setTimeout(() => router.replace("/login?error=unexpected"), 1500);

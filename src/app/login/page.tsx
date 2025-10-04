@@ -39,7 +39,7 @@ export default function LoginPage() {
         setStatus("sent");
         setMessage("Magic link sent. Please check your inbox.");
       }
-    } catch (err) {
+    } catch (_err) {
       setStatus("error");
       setMessage("Unexpected error.");
     }
