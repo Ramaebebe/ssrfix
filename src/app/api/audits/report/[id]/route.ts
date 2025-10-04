@@ -1,53 +1,90 @@
+// src/app/api/audits/report/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { buildAuditPdf } from "@/lib/pdf/auditTemplate";
-import { BRAND } from "@/lib/pdf/brand";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { buildWcpAuditPdf, type WcpAuditPdfData } from "@/lib/pdf/wcpAuditTemplate";
+import { toUint8 } from "@/lib/pdf/binary";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
-const toUint8 = (buf: Buffer): Uint8Array =>
-  new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+type RowVehicle = {
+  reg: string | null;
+  vin: string | null;
+  make: string | null;
+  model: string | null;
+};
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+type RowItem = {
+  category: string;
+  field: string;
+  status: string;
+  notes: string | null;
+};
 
-    const { data: audit } = await supabase.from("vehicle_audits").select("*").eq("id", params.id).single();
-    if (!audit) throw new Error("Audit not found");
+type RowAssessment = {
+  id: string;
+  created_at: string;
+  operator_id: string | null;
+  signature_url: string | null;
+  vehicle: RowVehicle | null;
+  items: RowItem[] | null;
+};
 
-    const logoPath = path.join(process.cwd(), "public", BRAND.logoPath.replace(/^\//, ""));
-    const logoBuf = await fs.readFile(logoPath).catch(() => Buffer.alloc(0));
-    const logoBytes = toUint8(logoBuf);
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
 
-    const pdfBytes = await buildAuditPdf(
-      {
-        id: audit.id,
-        date: audit.date || new Date().toISOString(),
-        inspector: audit.inspector || "N/A",
-        vehicle: { reg: audit.reg, vin: audit.vin, make: audit.make, model: audit.model },
-        location: audit.address || "N/A",
-        findings: audit.findings || "None",
-        notes: audit.notes || "",
-        photos: [],
-      },
-      logoBytes
-    );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const sb = createClient(supabaseUrl, serviceKey);
 
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
-    return new NextResponse(blob, {
-      status: 200,
-      headers: { "Content-Disposition": `inline; filename="audit-${params.id}.pdf"` },
-    });
-  } catch (e: unknown) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to render audit PDF" },
-      { status: 400 }
-    );
+  const { data, error } = await sb
+    .from("wcp_assessments")
+    .select<RowAssessment>(
+      `
+      id, created_at, operator_id, signature_url,
+      vehicle:vehicles ( reg, vin, make, model ),
+      items:wcp_assessment_items ( category, field, status, notes )
+    `
+    )
+    .eq("id", id)
+    .single();
+
+  if (error || !data) {
+    return NextResponse.json({ error: error?.message || "Not found" }, { status: 404 });
   }
+
+  const payload: WcpAuditPdfData = {
+    assessment: {
+      id: data.id,
+      createdAt: data.created_at,
+      operatorId: data.operator_id ?? undefined,
+      signatureUrl: data.signature_url ?? undefined,
+    },
+    vehicle: {
+      reg: data.vehicle?.reg ?? "-",
+      vin: data.vehicle?.vin ?? "-",
+      make: data.vehicle?.make ?? "-",
+      model: data.vehicle?.model ?? "-",
+    },
+    items:
+      (data.items ?? []).map((i) => ({
+        category: i.category,
+        field: i.field,
+        status: i.status as "Pass" | "Fail" | "N/A",
+        notes: i.notes ?? undefined,
+      })) ?? [],
+  };
+
+  const pdfBytes = await buildWcpAuditPdf(payload);
+  const u8 = toUint8(pdfBytes);
+
+  return new NextResponse(new Blob([u8], { type: "application/pdf" }), {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="audit-${id}.pdf"`,
+      "Cache-Control": "no-store",
+    },
+  });
 }

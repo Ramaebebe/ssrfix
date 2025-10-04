@@ -1,10 +1,9 @@
-﻿/* src/app/auth/callback/page.tsx */
+// src/app/auth/callback/page.tsx
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { isDemo } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,41 +11,49 @@ export const revalidate = 0;
 function CallbackInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [message, setMessage] = useState("Completing sign-inâ€¦");
+  const [message, setMessage] = useState("Completing sign-in…");
 
   useEffect(() => {
     let alive = true;
 
     const finish = async () => {
-      if (isDemo()) {
-        setMessage("Demo mode â€” redirectingâ€¦");
-        router.replace("/client/dashboard");
-        return;
-      }
-
       try {
+        // Handle error from query string (expired/invalid link)
+        const errParam = searchParams.get("error");
+        const errDesc = searchParams.get("error_description");
+        if (errParam) {
+          setMessage(`Sign-in error: ${decodeURIComponent(errDesc || errParam)}`);
+          setTimeout(() => router.replace("/login"), 1500);
+          return;
+        }
+
+        // Try to exchange the current URL for a session (handles hash or query)
         const { error } = await supabase.auth.exchangeCodeForSession(
-          window.location.href
+          typeof window !== "undefined" ? window.location.href : ""
         );
         if (error) {
           if (!alive) return;
           setMessage(`Sign-in error: ${error.message}`);
-          setTimeout(() => router.replace("/login?error=" + encodeURIComponent(error.message)), 1500);
+          setTimeout(() => router.replace("/login"), 1500);
           return;
         }
-        const redirectTo = (searchParams.get("redirect") || "/client/dashboard") as string;
+
+        // Optional redirect param
+        const redirectTo = searchParams.get("redirect") || "/client/dashboard";
         if (!alive) return;
-        setMessage("Signed in. Redirectingâ€¦");
-        router.replace(redirectTo);
-      } catch (e) {
+        setMessage("Signed in. Redirecting…");
+        router.replace(redirectTo as string);
+      } catch {
         if (!alive) return;
         setMessage("Unexpected error during sign-in.");
-        setTimeout(() => router.replace("/login?error=unexpected"), 1500);
+        setTimeout(() => router.replace("/login"), 1500);
       }
     };
 
     finish();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [router, searchParams]);
 
   return (
@@ -66,7 +73,7 @@ export default function CallbackPage() {
         <div className="min-h-[50vh] flex items-center justify-center">
           <div className="card p-6 text-center">
             <h1 className="text-xl font-semibold mb-2">Authenticating</h1>
-            <p className="text-white/70">Preparingâ€¦</p>
+            <p className="text-white/70">Preparing…</p>
           </div>
         </div>
       }

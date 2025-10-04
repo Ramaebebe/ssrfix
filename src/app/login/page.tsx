@@ -1,31 +1,32 @@
-// src/app/login/page.tsx
-"use client";
+﻿"use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase/client";
-
-type Status = "idle" | "sending" | "sent" | "error";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const demo = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [message, setMessage] = useState<string>("");
+  const [status, setStatus] = useState<"idle"|"sending"|"sent"|"error">("idle");
+  const [message, setMessage] = useState("");
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
 
+    if (demo) {
+      router.replace("/client/dashboard");
+      return;
+    }
+
+    // Real Supabase flow (only runs if DEMO_MODE !== true)
     setStatus("sending");
-    setMessage("");
-
     try {
-      const origin =
-        typeof window !== "undefined" && window.location.origin
-          ? window.location.origin
-          : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback`
+          : "/auth/callback";
 
-      const redirectTo = `${origin}/auth/callback`;
-
+      const { supabase } = await import("@/lib/supabase/client");
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: redirectTo },
@@ -34,18 +35,13 @@ export default function LoginPage() {
       if (error) {
         setStatus("error");
         setMessage(error.message || "Failed to send magic link.");
-        return;
+      } else {
+        setStatus("sent");
+        setMessage("Magic link sent. Please check your inbox.");
       }
-
-      setStatus("sent");
-      setMessage("Magic link sent. Please check your inbox.");
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "message" in err
-          ? String((err as { message?: unknown }).message)
-          : "Unexpected error.";
+    } catch (err) {
       setStatus("error");
-      setMessage(msg);
+      setMessage("Unexpected error.");
     }
   };
 
@@ -54,39 +50,37 @@ export default function LoginPage() {
       <div className="card p-6 max-w-md w-full">
         <h1 className="text-2xl font-semibold mb-1">Sign in</h1>
         <p className="text-white/70 mb-6">
-          Enter your email and we’ll email you a magic link.
+          {demo ? "Demo mode: Click the button to continue." : "Enter your email and we’ll email you a magic link."}
         </p>
 
         <form onSubmit={onSubmit} className="space-y-4">
-          <label className="block">
-            <span className="text-sm text-white/70">Email</span>
-            <input
-              type="email"
-              required
-              className="input mt-1 w-full"
-              placeholder="you@company.co.za"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </label>
+          {!demo && (
+            <label className="block">
+              <span className="text-sm text-white/70">Email</span>
+              <input
+                type="email"
+                required
+                className="input mt-1 w-full"
+                placeholder="you@company.co.za"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </label>
+          )}
 
           <button type="submit" className="btn w-full" disabled={status === "sending"}>
-            {status === "sending" ? "Sending…" : "Send magic link"}
+            {demo ? "Enter Portal" : status === "sending" ? "Sending…" : "Send magic link"}
           </button>
         </form>
 
-        {status !== "idle" && (
-          <div
-            className={
-              "mt-4 text-sm " + (status === "error" ? "text-red-400" : "text-white/80")
-            }
-          >
+        {status !== "idle" && !demo && (
+          <div className={"mt-4 text-sm " + (status === "error" ? "text-red-400" : "text-white/80")}>
             {message}
           </div>
         )}
 
         <div className="mt-6 text-xs text-white/50">
-          By signing in, you agree to our acceptable use policy.
+          {demo ? "Authentication is bypassed in demo mode." : "By signing in, you agree to our acceptable use policy."}
         </div>
       </div>
     </main>

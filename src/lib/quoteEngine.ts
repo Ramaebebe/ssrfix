@@ -1,14 +1,29 @@
-type Vehicle = { base_price:number; ev?:boolean };
-type Accessory = { price:number };
+// src/lib/quoteEngine.ts
+/**
+ * Very simple PMT calc for illustration.
+ */
+export function pmt(ratePerMonth: number, termMonths: number, principal: number): number {
+  if (ratePerMonth === 0) return -(principal / termMonths);
+  const r = ratePerMonth;
+  return -(principal * r) / (1 - Math.pow(1 + r, -termMonths));
+}
 
-export function priceQuote({ vehicle, termMonths, limitKm, accessories }:{
-  vehicle: Vehicle; termMonths:number; limitKm:number; accessories: Accessory[];
-}){
-  // simple example: finance factor + km factor + accessories
-  const rate = vehicle.ev ? 0.012 : 0.015; // EV slightly cheaper
-  const kmFactor = Math.max(1, limitKm/180000);
-  const accTotal = accessories.reduce((s,a)=>s + (a.price||0),0);
-  const total = vehicle.base_price*kmFactor + accTotal;
-  const monthly = total * rate;
-  return { monthly: Math.round(monthly), total: Math.round(total) };
+export function priceQuote({
+  basePrice,
+  accessoriesTotal,
+  ratePerAnnum,
+  termMonths,
+}: {
+  basePrice: number;
+  accessoriesTotal: number;
+  ratePerAnnum: number; // e.g. 0.12
+  termMonths: number;   // e.g. 36
+}) {
+  const principal = basePrice + accessoriesTotal;
+  const ratePerMonth = ratePerAnnum / 12;
+  const monthly = pmt(ratePerMonth, termMonths, principal);
+  return {
+    principal,
+    monthly: Math.round(Math.abs(monthly)),
+  };
 }
